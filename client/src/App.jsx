@@ -29,7 +29,7 @@ function Login() {
       // Это убьёт старое расписание 100%.
       localStorage.clear();
 
-      const response = await axios.post('http://localhost:5000/api/schedule', {
+      const response = await axios.post('https://kstu-schedule-app-server.vercel.app/api/schedule', {
         username,
         password
       });
