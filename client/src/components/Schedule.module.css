@@ -1,0 +1,423 @@
+/* ===== GRID ===== */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  animation: fadeIn 0.4s ease;
+}
+
+/* ===== DAYS ===== */
+
+.daysHeader {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  margin: 20px 0 10px;
+}
+
+.dayTitle {
+  text-align: center;
+  font-weight: 600;
+  color: #1f2937;
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 10px 4px;
+}
+
+.dayColumn {
+  background: #f8fafc;
+  border-radius: 14px;
+  padding: 10px;
+  min-height: 200px;
+}
+
+/* ===== LESSON ===== */
+
+.lesson {
+  background: #e9f2ff;
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.time {
+  font-size: 11px;
+  font-weight: 600;
+  color: #2563eb;
+  margin-bottom: 4px;
+}
+
+.subject {
+  font-weight: 600;
+}
+
+.teacher {
+  font-size: 12px;
+  color: #444;
+}
+
+.room {
+  font-size: 11px;
+  color: #666;
+}
+
+/* ===== EMPTY ===== */
+
+.noLessons {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
+  padding: 20px 6px;
+}
+
+/* ===== SWITCH ===== */
+
+.switch {
+  position: relative;
+  display: flex;
+  width: calc(100% - 32px);
+  /* Отступы по бокам */
+  max-width: 420px;
+  box-sizing: border-box;
+  background: #eef1f4;
+  border-radius: 18px;
+  padding: 4px;
+  /* Чуть меньше паддинг */
+  margin: 20px auto;
+  font-size: 16px;
+  box-shadow: inset 0 0 0 1px #e3e6ea;
+}
+
+@media (max-width: 400px) {
+  .switch {
+    font-size: 14px;
+    width: calc(100% - 24px);
+  }
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 12px 0;
+  cursor: pointer;
+  color: #6b7280;
+  font-weight: 500;
+  z-index: 2;
+  transition: color 0.25s ease;
+}
+
+.active {
+  color: #fff;
+  font-weight: 600;
+}
+
+.slider {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: calc(50% - 6px);
+  height: calc(100% - 12px);
+  background: linear-gradient(135deg, #0096de, #00b2ff);
+  border-radius: 14px;
+  transition: transform 0.35s cubic-bezier(.4, 0, .2, 1);
+  z-index: 1;
+}
+
+.switch:has(.tab:nth-child(1).active) .slider {
+  transform: translateX(0%);
+}
+
+.switch:has(.tab:nth-child(2).active) .slider {
+  transform: translateX(100%);
+}
+
+/* ===== LOADER ===== */
+
+.loaderWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  gap: 12px;
+}
+
+.loader {
+  width: 52px;
+  height: 52px;
+  border: 5px solid #e6edf3;
+  border-top: 5px solid #0096de;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+.loadingText {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* ===== MOBILE ===== */
+
+.mobileDayTitle {
+  display: none;
+}
+
+/* ===== ANIM ===== */
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== HEADER ===== */
+
+.headerContainer {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  margin-bottom: 15px;
+  background: #f1f5f9;
+  border-radius: 12px;
+  min-height: 80px;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+}
+
+.headerCenter {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: max-content;
+}
+
+.headerRight {
+  z-index: 1;
+}
+
+.greeting {
+  font-size: 20px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.date {
+  font-size: 14px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.logoutBtn {
+  background-color: #dc2626;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.2s;
+}
+
+.logoutBtn:hover {
+  background-color: #b91c1c;
+}
+
+
+/* ===== MOBILE TABS ===== */
+
+.mobileTabs {
+  display: none;
+  /* Скрыто на десктопе */
+  gap: 8px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  /* Место для ползунка */
+  scrollbar-width: thin;
+  /* Firefox */
+  scrollbar-color: #cbd5e1 transparent;
+  justify-content: center;
+  /* Центрируем табы */
+}
+
+/* Стили ползунка для Chrome/Safari */
+.mobileTabs::-webkit-scrollbar {
+  height: 6px;
+}
+
+.mobileTabs::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mobileTabs::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 20px;
+}
+
+.mobileTab {
+  flex: 0 0 auto;
+  /* Не сжимать табы */
+  text-align: center;
+  padding: 10px 4px;
+  /* Меньше паддинг по бокам */
+  background: #f1f5f9;
+  border-radius: 10px;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  min-width: 58px;
+  /* Уменьшаем мин. ширину чтобы влезло */
+  transition: all 0.2s;
+  font-size: 14px;
+  /* Чуть меньше шрифт */
+}
+
+.activeTab {
+  background: #0096de;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 4px 6px -1px rgba(0, 150, 222, 0.2);
+}
+
+
+/* ===== RESPONSIVE ===== */
+/* Remove old weekInfo styles as they are replaced by headerCenter */
+.weekInfo {
+  /* keeping just in case but modifying */
+  text-align: center;
+}
+
+.weekNumber {
+  font-size: 16px;
+  font-weight: bold;
+  color: #111827;
+}
+
+.weekType {
+  font-size: 12px;
+  color: #0096de;
+  font-weight: 500;
+}
+
+
+/* подсветка текущего дня */
+.today {
+  background: rgba(0, 150, 222, 0.06);
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px rgba(0, 150, 222, 0.25);
+}
+
+/* мобилка */
+@media (max-width: 480px) {
+  /* ... */
+}
+
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .daysHeader {
+    display: none;
+  }
+
+  .mobileTabs {
+    display: flex;
+  }
+
+  .grid {
+    display: block;
+  }
+
+  .mobileDayTitle {
+    display: block;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 8px;
+    color: #1f2937;
+    font-size: 18px;
+  }
+
+  .dayColumn {
+    display: none;
+    margin-bottom: 0;
+    min-height: auto;
+  }
+
+  .dayColumn.mobileVisible {
+    display: block;
+    animation: fadeIn 0.3s ease;
+  }
+
+  /* Header Responsive Logic */
+  .headerContainer {
+    flex-wrap: wrap;
+    min-height: auto;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .headerLeft {
+    order: 1;
+    flex: 1;
+    min-width: 0;
+    margin-right: 10px;
+    max-width: none;
+  }
+
+  .headerRight {
+    order: 2;
+    flex-shrink: 0;
+    margin-left: 0;
+  }
+
+  .headerCenter {
+    position: static;
+    transform: none;
+    order: 3;
+    width: 100%;
+    margin-top: 4px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+    flex-direction: row;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .greeting {
+    font-size: 18px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

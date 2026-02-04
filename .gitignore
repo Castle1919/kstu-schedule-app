@@ -1,0 +1,6 @@
+node_modules
+.env
+screenshots
+*.png
+# Если используешь Playwright, он может качать браузеры в локальную папку
+.cache

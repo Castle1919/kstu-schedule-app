@@ -1,0 +1,116 @@
+
+[2026-02-04T20:20:27.195Z] SCRAPER ERROR: page.waitForURL: Timeout 15000ms exceeded.
+=========================== logs ===========================
+waiting for navigation to "**/news/student/**" until "load"
+============================================================
+STACK: page.waitForURL: Timeout 15000ms exceeded.
+=========================== logs ===========================
+waiting for navigation to "**/news/student/**" until "load"
+============================================================
+    at scrapeSchedule (C:\Users\nursu\OneDrive\Рабочий стол\univer-pars\server\index.js:36:20)
+    at async file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:306:22
+
+[2026-02-04T20:20:28.280Z] API ERROR: page.waitForURL: Timeout 15000ms exceeded.
+=========================== logs ===========================
+waiting for navigation to "**/news/student/**" until "load"
+============================================================
+STACK: page.waitForURL: Timeout 15000ms exceeded.
+=========================== logs ===========================
+waiting for navigation to "**/news/student/**" until "load"
+============================================================
+    at scrapeSchedule (C:\Users\nursu\OneDrive\Рабочий стол\univer-pars\server\index.js:36:20)
+    at async file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:306:22
+
+[2026-02-04T20:22:38.584Z] SCRAPER ERROR: Не удалось войти в систему. Проверьте логин и пароль.
+STACK: Error: Не удалось войти в систему. Проверьте логин и пароль.
+    at scrapeSchedule (file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:50:27)
+    at runNextTicks (node:internal/process/task_queues:60:5)
+    at process.processImmediate (node:internal/timers:449:9)
+    at process.callbackTrampoline (node:internal/async_hooks:130:17)
+    at async file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:321:22
+
+[2026-02-04T20:23:11.904Z] SCRAPER ERROR: Не удалось войти в систему. Проверьте логин и пароль.
+STACK: Error: Не удалось войти в систему. Проверьте логин и пароль.
+    at scrapeSchedule (file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:50:27)
+    at async file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:321:22
+
+[2026-02-04T20:23:12.987Z] API ERROR: Не удалось войти в систему. Проверьте логин и пароль.
+STACK: Error: Не удалось войти в систему. Проверьте логин и пароль.
+    at scrapeSchedule (file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:50:27)
+    at async file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:321:22
+
+[2026-02-04T20:46:50.385Z] SCRAPER ERROR: Не удалось войти в систему. Проверьте логин и пароль.
+STACK: Error: Не удалось войти в систему. Проверьте логин и пароль.
+    at scrapeSchedule (file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:59:27)
+    at async file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:246:22
+
+[2026-02-04T20:46:50.445Z] API ERROR: Не удалось войти в систему. Проверьте логин и пароль.
+STACK: Error: Не удалось войти в систему. Проверьте логин и пароль.
+    at scrapeSchedule (file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:59:27)
+    at async file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:246:22
+
+[2026-02-04T20:55:57.587Z] SCRAPER ERROR: Не удалось войти в систему. Проверьте логин и пароль.
+STACK: Error: Не удалось войти в систему. Проверьте логин и пароль.
+    at scrapeSchedule (file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:59:27)
+    at async file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:246:22
+
+[2026-02-04T20:55:57.649Z] API ERROR: Не удалось войти в систему. Проверьте логин и пароль.
+STACK: Error: Не удалось войти в систему. Проверьте логин и пароль.
+    at scrapeSchedule (file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:59:27)
+    at async file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:246:22
+
+[2026-02-04T20:56:52.868Z] SCRAPER ERROR: Не удалось войти в систему. Проверьте логин и пароль.
+STACK: Error: Не удалось войти в систему. Проверьте логин и пароль.
+    at scrapeSchedule (file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:59:27)
+    at async file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:246:22
+
+[2026-02-04T20:56:52.925Z] API ERROR: Не удалось войти в систему. Проверьте логин и пароль.
+STACK: Error: Не удалось войти в систему. Проверьте логин и пароль.
+    at scrapeSchedule (file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:59:27)
+    at async file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:246:22
+
+[2026-02-04T20:57:46.803Z] SCRAPER ERROR: Не удалось войти в систему. Проверьте логин и пароль.
+STACK: Error: Не удалось войти в систему. Проверьте логин и пароль.
+    at scrapeSchedule (file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:59:27)
+    at async file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:246:22
+
+[2026-02-04T20:57:46.850Z] API ERROR: Не удалось войти в систему. Проверьте логин и пароль.
+STACK: Error: Не удалось войти в систему. Проверьте логин и пароль.
+    at scrapeSchedule (file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:59:27)
+    at async file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:246:22
+
+[2026-02-04T20:58:16.710Z] SCRAPER ERROR: Не удалось войти в систему. Проверьте логин и пароль.
+STACK: Error: Не удалось войти в систему. Проверьте логин и пароль.
+    at scrapeSchedule (file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:59:27)
+    at async file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:246:22
+
+[2026-02-04T20:58:16.767Z] API ERROR: Не удалось войти в систему. Проверьте логин и пароль.
+STACK: Error: Не удалось войти в систему. Проверьте логин и пароль.
+    at scrapeSchedule (file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:59:27)
+    at async file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:246:22
+
+[2026-02-04T20:59:00.624Z] SCRAPER ERROR: Не удалось войти в систему. Проверьте логин и пароль.
+STACK: Error: Не удалось войти в систему. Проверьте логин и пароль.
+    at scrapeSchedule (file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:50:27)
+    at runNextTicks (node:internal/process/task_queues:60:5)
+    at process.processImmediate (node:internal/timers:449:9)
+    at process.callbackTrampoline (node:internal/async_hooks:130:17)
+    at async file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:321:22
+
+[2026-02-04T20:59:00.631Z] API ERROR: Не удалось войти в систему. Проверьте логин и пароль.
+STACK: Error: Не удалось войти в систему. Проверьте логин и пароль.
+    at scrapeSchedule (file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:50:27)
+    at runNextTicks (node:internal/process/task_queues:60:5)
+    at process.processImmediate (node:internal/timers:449:9)
+    at process.callbackTrampoline (node:internal/async_hooks:130:17)
+    at async file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:321:22
+
+[2026-02-04T21:00:17.514Z] SCRAPER ERROR: Не удалось войти в систему. Проверьте логин и пароль.
+STACK: Error: Не удалось войти в систему. Проверьте логин и пароль.
+    at scrapeSchedule (file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:50:27)
+    at async file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:321:22
+
+[2026-02-04T21:00:18.629Z] API ERROR: Не удалось войти в систему. Проверьте логин и пароль.
+STACK: Error: Не удалось войти в систему. Проверьте логин и пароль.
+    at scrapeSchedule (file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:50:27)
+    at async file:///C:/Users/nursu/OneDrive/%D0%A0%D0%B0%D0%B1%D0%BE%D1%87%D0%B8%D0%B9%20%D1%81%D1%82%D0%BE%D0%BB/univer-pars/server/index.js:321:22
