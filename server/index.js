@@ -113,6 +113,12 @@ async function scrapeSchedule(username, password) {
             const rows = Array.from(document.querySelectorAll('.schedule tr')).slice(1);
             if (rows.length === 0) return { parsedData: [] };
 
+            const cleanText = (text) => {
+                if (!text) return "";
+                // Убираем "Период с 26.01 по 09.05 знаменатель" и подобные вставки
+                return text.replace(/Период с \d{2}\.\d{2} по \d{2}\.\d{2} (знаменатель|числитель)/gi, '').trim();
+            };
+
             const parsedData = rows.map((row) => {
                 const allCells = Array.from(row.children);
                 if (allCells.length < 2) return null;
@@ -149,9 +155,9 @@ async function scrapeSchedule(username, password) {
 
                         return {
                             time: rowTime,
-                            subject: teachers[0]?.innerText.trim() || '',
-                            teacher: teachers[1]?.innerText.trim() || '',
-                            room: Array.from(params).map(p => p.innerText.trim()).join(' ').replace(/\s+/g, ' '),
+                            subject: cleanText(teachers[0]?.innerText || ''),
+                            teacher: cleanText(teachers[1]?.innerText || ''),
+                            room: cleanText(Array.from(params).map(p => p.innerText.trim()).join(' ').replace(/\s+/g, ' ')),
                             type
                         };
                     });

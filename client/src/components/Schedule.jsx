@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import styles from './Schedule.module.css';
 
 const DAYS_OF_WEEK = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
@@ -18,14 +19,29 @@ const { weekType: initialWeekType } = getWeekInfo();
 export default function Schedule() {
     const navigate = useNavigate();
 
-    // Оставили только переменную schedule, так как мы её не меняем здесь
-    const schedule = (() => {
+    // Тема
+    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+    }, [theme]);
+
+    const toggleTheme = () => {
+        setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    };
+
+    // Состояние данных
+    const [schedule, setSchedule] = useState(() => {
         const saved = localStorage.getItem('userSchedule');
         return saved ? JSON.parse(saved) : [];
-    })();
+    });
+
+    const [refreshing, setRefreshing] = useState(false);
+    const username = localStorage.getItem('username') || '';
+    const password = localStorage.getItem('password') || '';
 
     const [selectedWeekType, setSelectedWeekType] = useState(initialWeekType);
-    const username = localStorage.getItem('username') || '';
     const [currentDate, setCurrentDate] = useState('');
 
     const { weekNumber: currentWeekNumber, weekType: currentWeekType } = getWeekInfo();
@@ -39,7 +55,37 @@ export default function Schedule() {
         const options = { weekday: 'long', day: 'numeric', month: 'long' };
         const dateStr = new Date().toLocaleDateString('ru-RU', options);
         setCurrentDate(dateStr.charAt(0).toUpperCase() + dateStr.slice(1));
+
+        // Авто-обновление если прошло больше 6 часов
+        const lastUpdate = localStorage.getItem('lastUpdate');
+        if (lastUpdate) {
+            const diff = Date.now() - parseInt(lastUpdate);
+            if (diff > 6 * 60 * 60 * 1000) {
+                console.log('Данные устарели, запускаю авто-обновление...');
+                handleRefresh();
+            }
+        }
     }, [navigate, schedule]);
+
+    const handleRefresh = async () => {
+        if (refreshing) return;
+        setRefreshing(true);
+        try {
+            const response = await axios.post('https://kstu-schedule-app-server.vercel.app/api/schedule', {
+                username,
+                password
+            });
+            if (response.data && Array.isArray(response.data)) {
+                setSchedule(response.data);
+                localStorage.setItem('userSchedule', JSON.stringify(response.data));
+                localStorage.setItem('lastUpdate', Date.now().toString());
+            }
+        } catch (e) {
+            console.error('Ошибка при обновлении:', e);
+        } finally {
+            setRefreshing(false);
+        }
+    };
 
     const filteredLessons = schedule.map(row =>
         row.map(day =>
@@ -89,7 +135,18 @@ export default function Schedule() {
                         {currentWeekType === 'numerator' ? 'Числитель' : 'Знаменатель'}
                     </div>
                 </div>
-                <div className={styles.headerRight}>
+                <div className={styles.headerRight} style={{ display: 'flex', alignItems: 'center' }}>
+                    <div
+                        className={styles.themeToggle}
+                        onClick={handleRefresh}
+                        style={{ marginRight: '15px' }}
+                        title="Обновить расписание"
+                    >
+                        <span className={`${styles.toggleIcon} ${refreshing ? styles.spin : ''}`}>🔄</span>
+                    </div>
+                    <div className={styles.themeToggle} onClick={toggleTheme}>
+                        <span className={styles.toggleIcon}>{theme === 'light' ? '🌙' : '☀️'}</span>
+                    </div>
                     <button onClick={handleLogout} className={styles.logoutBtn}>Выйти</button>
                 </div>
             </div>

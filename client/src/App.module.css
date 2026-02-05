@@ -1,20 +1,21 @@
 .page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #eef3f8, #f7f9fc);
+  background: var(--bg-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font);
+  transition: background 0.3s;
 }
 
 .card {
   width: 100%;
   max-width: 380px;
-  background: #ffffff;
+  background: var(--card-bg);
   border-radius: 18px;
   padding: 28px 26px 30px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow);
   animation: fadeIn 0.5s ease;
+  transition: background 0.3s, box-shadow 0.3s;
 }
 
 .header {
@@ -31,13 +32,13 @@
   font-size: 22px;
   margin: 0;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-color);
 }
 
 .header p {
   margin-top: 4px;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--secondary-text);
 }
 
 .form {
@@ -54,14 +55,16 @@
 
 .field label {
   font-size: 13px;
-  color: #374151;
+  color: var(--text-color);
   font-weight: 500;
 }
 
 .field input {
   padding: 11px 12px;
   border-radius: 10px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-color);
+  background: var(--input-bg);
+  color: var(--text-color);
   font-size: 14px;
   outline: none;
   transition: all 0.2s ease;
@@ -99,6 +102,7 @@
     opacity: 0;
     transform: translateY(12px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

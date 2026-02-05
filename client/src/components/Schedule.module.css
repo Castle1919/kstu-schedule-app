@@ -19,14 +19,14 @@
 .dayTitle {
   text-align: center;
   font-weight: 600;
-  color: #1f2937;
-  background: #f1f5f9;
+  color: var(--text-color);
+  background: var(--tab-bg);
   border-radius: 10px;
   padding: 10px 4px;
 }
 
 .dayColumn {
-  background: #f8fafc;
+  background: var(--input-bg);
   border-radius: 14px;
   padding: 10px;
   min-height: 200px;
@@ -35,18 +35,19 @@
 /* ===== LESSON ===== */
 
 .lesson {
-  background: #e9f2ff;
+  background: var(--tab-bg);
   border-radius: 10px;
   padding: 10px;
   margin-bottom: 10px;
   font-size: 13px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow);
+  color: var(--text-color);
 }
 
 .time {
   font-size: 11px;
   font-weight: 600;
-  color: #2563eb;
+  color: var(--accent-color);
   margin-bottom: 4px;
 }
 
@@ -56,12 +57,12 @@
 
 .teacher {
   font-size: 12px;
-  color: #444;
+  color: var(--secondary-text);
 }
 
 .room {
   font-size: 11px;
-  color: #666;
+  color: var(--secondary-text);
 }
 
 /* ===== EMPTY ===== */
@@ -82,13 +83,13 @@
   /* Отступы по бокам */
   max-width: 420px;
   box-sizing: border-box;
-  background: #eef1f4;
+  background: var(--tab-bg);
   border-radius: 18px;
   padding: 4px;
   /* Чуть меньше паддинг */
   margin: 20px auto;
   font-size: 16px;
-  box-shadow: inset 0 0 0 1px #e3e6ea;
+  box-shadow: inset 0 0 0 1px var(--border-color);
 }
 
 @media (max-width: 400px) {
@@ -103,7 +104,7 @@
   text-align: center;
   padding: 12px 0;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--tab-text);
   font-weight: 500;
   z-index: 2;
   transition: color 0.25s ease;
@@ -195,7 +196,7 @@
   align-items: center;
   padding: 16px 20px;
   margin-bottom: 15px;
-  background: #f1f5f9;
+  background: var(--tab-bg);
   border-radius: 12px;
   min-height: 80px;
 }
@@ -224,12 +225,12 @@
 .greeting {
   font-size: 20px;
   font-weight: 800;
-  color: #111827;
+  color: var(--text-color);
 }
 
 .date {
   font-size: 14px;
-  color: #64748b;
+  color: var(--secondary-text);
   margin-top: 2px;
 }
 
@@ -287,10 +288,10 @@
   text-align: center;
   padding: 10px 4px;
   /* Меньше паддинг по бокам */
-  background: #f1f5f9;
+  background: var(--tab-bg);
   border-radius: 10px;
   font-weight: 500;
-  color: #64748b;
+  color: var(--tab-text);
   cursor: pointer;
   min-width: 58px;
   /* Уменьшаем мин. ширину чтобы влезло */
@@ -401,23 +402,36 @@
     margin-left: 0;
   }
 
-  .headerCenter {
-    position: static;
-    transform: none;
-    order: 3;
-    width: 100%;
-    margin-top: 4px;
-    padding-top: 12px;
-    border-top: 1px solid #e2e8f0;
-    flex-direction: row;
-    justify-content: center;
-    gap: 10px;
+  .weekNumber {
+    color: var(--text-color);
   }
+}
 
-  .greeting {
-    font-size: 18px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+/* ===== THEME TOGGLE ===== */
+.themeToggle {
+  display: flex;
+  align-items: center;
+  margin-right: 15px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggleIcon {
+  font-size: 20px;
+  transition: transform 0.3s ease;
+}
+
+.themeToggle:hover .toggleIcon {
+  transform: scale(1.1);
+}
+
+@media (max-width: 600px) {
+  .themeToggle {
+    margin-right: 10px;
   }
+}
+
+.spin {
+  display: inline-block;
+  animation: spin 1s linear infinite;
 }

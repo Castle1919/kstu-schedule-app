@@ -96,10 +96,10 @@ function Login() {
           )}
 
           <div className={styles.field}>
-            <label>Логин (i-univer)</label>
+            <label>Логин</label>
             <input
               type="text"
-              placeholder="nursultanuly.arman"
+              placeholder="логин"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -111,7 +111,7 @@ function Login() {
             <label>Пароль</label>
             <input
               type="password"
-              placeholder="••••••••"
+              placeholder="пароль"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -134,7 +134,7 @@ function Login() {
         </div>
 
         <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '11px', color: '#999' }}>
-          Бот имитирует действия студента для получения данных
+          <div>Authors: WildMaks456 & Castle1919</div>
         </div>
       </div>
     </div>
