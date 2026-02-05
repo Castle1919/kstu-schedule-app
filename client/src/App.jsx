@@ -16,7 +16,12 @@ function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const API_URL = window.location.hostname === 'localhost'
+    ? 'http://localhost:5000'
+    : 'https://kstu-schedule-app-server.vercel.app';
+
   const handleLogin = async (e) => {
+
     if (e) e.preventDefault();
 
     if (!username || !password) {
@@ -28,14 +33,27 @@ function Login() {
     setLoading(true);
 
     try {
+      const response = await axios.post(`${API_URL}/api/schedule`, {
+        username,
+        password
+      });
+    } catch (err) {
+      console.error(err);
+    }
+    if (e) e.preventDefault();
+
+    if (!username || !password) {
+      setError('Заполните все поля');
+      return;
+    }
+
+    try {
       console.log('Попытка входа для:', username);
 
-      // --- ВОТ ТУТ КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ ---
-      // Вместо удаления по одному, очищаем ВСЁ хранилище. 
-      // Это убьёт старое расписание 100%.
+      // очищаем ВСЁ хранилище. 
       localStorage.clear();
 
-      const response = await axios.post('https://kstu-schedule-app-server.vercel.app/api/schedule', {
+      const response = await axios.post(`${API_URL}/api/schedule`, {
         username,
         password
       });
@@ -60,8 +78,9 @@ function Login() {
 
     } catch (e) {
       console.error('Ошибка при входе:', e);
+
       if (e.response?.status === 401) {
-        setError('Неверный логин или пароль (КарТУ)');
+        setError('Неверный логин или пароль');
       } else {
         setError('Ошибка сервера или парсера. Проверьте консоль бэкенда.');
       }

@@ -4,7 +4,14 @@ import { chromium } from 'playwright-core';
 import sparticuzChromium from '@sparticuz/chromium';
 
 const app = express();
-app.use(cors());
+app.use(cors({
+    origin: [
+        'http://localhost:3000',
+        'http://localhost:5173', // если используешь Vite
+        'https://твой-фронтенд.vercel.app' // замени на адрес своего фронта
+    ],
+    credentials: true
+}));
 app.use(express.json());
 
 function getWeekRange() {
@@ -23,69 +30,71 @@ async function scrapeSchedule(username, password) {
     console.log(`\n[!] Начинаю парсинг для: ${username}`);
 
     let browser;
-
-    // --- ЛОГИКА ЗАПУСКА БРАУЗЕРА (ДЛЯ ОБЛАКА И LOCAL) ---
-    if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
-        // Настройки для Vercel / Render
-        browser = await chromium.launch({
-            args: sparticuzChromium.args,
-            executablePath: await sparticuzChromium.executablePath(),
-            headless: true,
-        });
-    } else {
-        // Твои локальные настройки с анти-детектом
-        console.log('[!] Запуск локального Chromium...');
-        browser = await chromium.launch({
-            headless: true,
-            args: [
-                '--disable-blink-features=AutomationControlled',
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-infobars',
-                '--ignore-certificate-errors',
-            ]
-        });
-    }
-
-    const context = await browser.newContext({
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        viewport: { width: 1280, height: 720 },
-        locale: 'ru-RU',
-        timezoneId: 'Asia/Almaty'
-    });
-
-    await context.addCookies([{
-        name: 'language',
-        value: 'ru',
-        domain: 'univer.kstu.kz',
-        path: '/'
-    }]);
-
-    const page = await context.newPage();
-
-    // Твой скрипт скрытия автоматизации
-    await page.addInitScript(() => {
-        Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-        window.chrome = { runtime: {} };
-        Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
-        Object.defineProperty(navigator, 'languages', { get: () => ['ru-RU', 'ru'] });
-    });
-
     try {
+        // --- ЛОГИКА ЗАПУСКА БРАУЗЕРА (ДЛЯ ОБЛАКА И LOCAL) ---
+        const launchArgs = [
+            '--disable-blink-features=AutomationControlled',
+            '--no-sandbox',
+            '--disable-gpu',
+            '--disable-dev-shm-usage',
+            '--disable-setuid-sandbox',
+            '--disable-infobars',
+            '--disable-accelerated-2d-canvas',
+            '--ignore-certificate-errors',
+            '--blink-settings=imagesEnabled=false', // Отключаем изображения для экономии памяти
+        ];
+
+        if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+            browser = await chromium.launch({
+                args: [...sparticuzChromium.args, ...launchArgs],
+                executablePath: await sparticuzChromium.executablePath(),
+                headless: true,
+            });
+        } else {
+            console.log('[!] Запуск локального Chromium...');
+            browser = await chromium.launch({
+                headless: true,
+                args: launchArgs
+            });
+        }
+
+        const context = await browser.newContext({
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            viewport: { width: 1280, height: 720 },
+            locale: 'ru-RU',
+            timezoneId: 'Asia/Almaty'
+        });
+
+        await context.addCookies([{
+            name: 'language',
+            value: 'ru',
+            domain: 'univer.kstu.kz',
+            path: '/'
+        }]);
+
+        const page = await context.newPage();
+
+        // Скрываем автоматизацию
+        await page.addInitScript(() => {
+            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+            window.chrome = { runtime: {} };
+            Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+            Object.defineProperty(navigator, 'languages', { get: () => ['ru-RU', 'ru'] });
+        });
+
         // 1. Логин
         await page.goto('https://univer.kstu.kz/user/login', { waitUntil: 'domcontentloaded' });
         await page.fill('input[type="text"]', username);
         await page.fill('input[type="password"]', password);
 
-        // Кликаем и ждем навигации (более надежно, чем просто таймаут)
         await Promise.all([
             page.click('input[type="submit"]'),
             page.waitForNavigation({ waitUntil: 'networkidle', timeout: 15000 }).catch(() => { })
         ]);
 
         if (page.url().includes('login')) {
-            console.log('[!] Ошибка: Не удалось войти.');
-            throw new Error('Login failed');
+            console.log('[!] Ошибка: Неверный логин или пароль.');
+            throw new Error('Invalid login or password');
         }
 
         // 2. Смена языка
@@ -104,18 +113,16 @@ async function scrapeSchedule(username, password) {
             await page.waitForSelector('.schedule', { timeout: 15000 });
         } catch (e) {
             console.log('[!] Таймаут: .schedule не найдена.');
-            await page.screenshot({ path: 'schedule_not_found.png', fullPage: true });
-            throw e;
+            throw new Error('Schedule table not found on page');
         }
 
-        // 4. Парсинг (твой evaluate без изменений)
+        // 4. Парсинг
         const resultObject = await page.evaluate(() => {
             const rows = Array.from(document.querySelectorAll('.schedule tr')).slice(1);
             if (rows.length === 0) return { parsedData: [] };
 
             const cleanText = (text) => {
                 if (!text) return "";
-                // Убираем "Период с 26.01 по 09.05 знаменатель" и подобные вставки
                 return text.replace(/Период с \d{2}\.\d{2} по \d{2}\.\d{2} (знаменатель|числитель)/gi, '').trim();
             };
 
@@ -167,13 +174,16 @@ async function scrapeSchedule(username, password) {
             return { parsedData };
         });
 
-        await browser.close();
         return resultObject.parsedData;
 
     } catch (err) {
-        console.error('!!! ОШИБКА:', err.message);
-        if (browser) await browser.close();
+        console.error('!!! ОШИБКА ПАРСИНГА:', err.message);
         throw err;
+    } finally {
+        if (browser) {
+            console.log('[!] Закрытие браузера...');
+            await browser.close();
+        }
     }
 }
 
@@ -182,7 +192,11 @@ app.post('/api/schedule', async (req, res) => {
         const result = await scrapeSchedule(req.body.username, req.body.password);
         res.json(result);
     } catch (error) {
-        res.status(500).json([]);
+        if (error.message === 'Invalid login or password') {
+            res.status(401).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: error.message });
+        }
     }
 });
 

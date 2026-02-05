@@ -32,14 +32,20 @@
   min-height: 200px;
 }
 
-/* ===== LESSON ===== */
+/* ===== LESSON (НАСТРОЙКИ РАЗМЕРА) ===== */
+/* Здесь вы можете легко изменить размер текста и отступы в карточках */
+:root {
+  --lesson-font-size: 13.5px;
+  --lesson-padding: 12px;
+  --lesson-margin: 12px;
+}
 
 .lesson {
   background: var(--lesson-bg);
   border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 12px;
-  font-size: 13.5px;
+  padding: var(--lesson-padding);
+  margin-bottom: var(--lesson-margin);
+  font-size: var(--lesson-font-size);
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow);
   color: var(--text-color);
@@ -408,29 +414,36 @@
   }
 
   /* Header Responsive Logic */
-  .headerContainer {
-    flex-wrap: wrap;
-    min-height: auto;
-    padding: 16px;
-    gap: 12px;
+  /* Чтобы приветствие не перекрывало номер недели на мобилках */
+  .headerCenter {
+    position: static;
+    transform: none;
+    order: 3;
+    width: 100%;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
   }
 
   .headerLeft {
     order: 1;
     flex: 1;
     min-width: 0;
-    margin-right: 10px;
-    max-width: none;
   }
 
   .headerRight {
     order: 2;
-    flex-shrink: 0;
-    margin-left: 0;
+  }
+
+  .greeting {
+    font-size: 18px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .weekNumber {
-    color: var(--text-color);
+    font-size: 15px;
   }
 }
 

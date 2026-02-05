@@ -107,23 +107,11 @@ export default function Schedule() {
         }
     };
 
-    const filteredLessons = schedule.map((row, rowIdx) =>
-        row.map((day, dayIdx) => {
-            const lessons = Array.isArray(day) ? day.filter(lesson =>
+    const filteredLessons = schedule.map((row) =>
+        row.map((day) => {
+            return Array.isArray(day) ? day.filter(lesson =>
                 lesson.type === 'all' || lesson.type === selectedWeekType
             ) : [];
-
-            // Добавляем тестовую пару на четверг (dayIdx === 3)
-            if (dayIdx === 3 && rowIdx === 0) {
-                lessons.unshift({
-                    time: "07:00-09:00",
-                    subject: "Тестовая пара (DEV)",
-                    teacher: "WildMaks456 & Castle1919",
-                    room: "Online",
-                    type: "all"
-                });
-            }
-            return lessons;
         })
     );
 
@@ -168,15 +156,7 @@ export default function Schedule() {
                     </div>
                 </div>
                 <div className={styles.headerRight} style={{ display: 'flex', alignItems: 'center' }}>
-                    <div
-                        className={styles.themeToggle}
-                        onClick={handleRefresh}
-                        style={{ marginRight: '15px' }}
-                        title="Обновить расписание"
-                    >
-                        <span className={`${styles.toggleIcon} ${refreshing ? styles.spin : ''}`}>🔄</span>
-                    </div>
-                    <div className={styles.themeToggle} onClick={toggleTheme}>
+                    <div className={styles.themeToggle} onClick={toggleTheme} title="Переключить тему">
                         <span className={styles.toggleIcon}>{theme === 'light' ? '🌙' : '☀️'}</span>
                     </div>
                     <button onClick={handleLogout} className={styles.logoutBtn}>Выйти</button>
