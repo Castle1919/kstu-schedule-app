@@ -1,6 +1,6 @@
 .page {
   min-height: 100vh;
-  background: var(--bg-color);
+  background: var(--bg-gradient);
   display: flex;
   align-items: center;
   justify-content: center;

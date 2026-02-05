@@ -5,29 +5,37 @@
 }
 
 :root {
-  --bg-color: #f5f7fa;
-  --text-color: #333;
-  --card-bg: #fff;
-  --secondary-text: #666;
-  --border-color: #eee;
-  --input-bg: #fff;
-  --tab-bg: #eee;
-  --tab-text: #777;
+  --bg-color: #f7f9fc;
+  --bg-gradient: linear-gradient(135deg, #eef3f8, #f7f9fc);
+  --text-color: #111827;
+  --card-bg: #ffffff;
+  --secondary-text: #64748b;
+  --border-color: #e5e7eb;
+  --input-bg: #ffffff;
+  --tab-bg: #f1f5f9;
+  --tab-text: #6b7280;
   --accent-color: #2563eb;
-  --shadow: 0 4px 6px rgba(0,0,0,0.1);
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  --lesson-bg: #e9f2ff;
+  --active-header: #000000;
+  --active-secondary: #374151;
 }
 
 [data-theme='dark'] {
-  --bg-color: #1a1a1a;
-  --text-color: #f1f1f1;
-  --card-bg: #2d2d2d;
-  --secondary-text: #aaa;
-  --border-color: #444;
-  --input-bg: #3d3d3d;
-  --tab-bg: #444;
-  --tab-text: #bbb;
+  --bg-color: #000000;
+  --bg-gradient: #000000;
+  --text-color: #ffffff;
+  --card-bg: #121212;
+  --secondary-text: #a1a1aa;
+  --border-color: #27272a;
+  --input-bg: #121212;
+  --tab-bg: #18181b;
+  --tab-text: #d4d4d8;
   --accent-color: #3b82f6;
-  --shadow: 0 4px 6px rgba(0,0,0,0.3);
+  --shadow: 0 0 0 1px #27272a;
+  --lesson-bg: #111111;
+  --active-header: #000000;
+  --active-secondary: #000000bb;
 }
 
 body {
@@ -37,7 +45,7 @@ body {
     sans-serif;
   background-color: var(--bg-color);
   color: var(--text-color);
-  transition: background-color 0.3s, color 0.3s;
+  transition: background-color 0.3s, color 0.2s;
 }
 
 code {

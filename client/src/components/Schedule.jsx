@@ -107,12 +107,24 @@ export default function Schedule() {
         }
     };
 
-    const filteredLessons = schedule.map(row =>
-        row.map(day =>
-            Array.isArray(day) ? day.filter(lesson =>
+    const filteredLessons = schedule.map((row, rowIdx) =>
+        row.map((day, dayIdx) => {
+            const lessons = Array.isArray(day) ? day.filter(lesson =>
                 lesson.type === 'all' || lesson.type === selectedWeekType
-            ) : []
-        )
+            ) : [];
+
+            // Добавляем тестовую пару на четверг (dayIdx === 3)
+            if (dayIdx === 3 && rowIdx === 0) {
+                lessons.unshift({
+                    time: "07:00-09:00",
+                    subject: "Тестовая пара (DEV)",
+                    teacher: "WildMaks456 & Castle1919",
+                    room: "Online",
+                    type: "all"
+                });
+            }
+            return lessons;
+        })
     );
 
     const activeTodayIndex = (() => {
@@ -204,8 +216,9 @@ export default function Schedule() {
                                 dayLessons.map((lesson, i) => {
                                     const activeNow = isToday && isLessonActive(lesson.time);
                                     return (
-                                        <div key={i} className={styles.lesson}
-                                            style={activeNow ? { border: '2px solid #22c55e', backgroundColor: '#dcfce7' } : {}}>
+                                        <div key={i}
+                                            className={`${styles.lesson} ${activeNow ? styles.activeLesson : ''}`}
+                                        >
                                             <div className={styles.time}>
                                                 {lesson.time || "Время не указано"} {activeNow && '🔥'}
                                             </div>
