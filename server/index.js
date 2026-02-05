@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
-import { chromium } from 'playwright-chromium';
+import { chromium } from 'playwright-core';
+import sparticuzChromium from '@sparticuz/chromium';
 
 const app = express();
 app.use(cors());
@@ -17,27 +18,38 @@ function getWeekRange() {
     return { monday: formatDate(monday), sunday: formatDate(sunday) };
 }
 
+
 async function scrapeSchedule(username, password) {
     console.log(`\n[!] Начинаю парсинг для: ${username}`);
-    const browser = await chromium.launch({
-        headless: true, // Возвращаем headless: true
-        args: [
-            '--disable-blink-features=AutomationControlled',
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-infobars',
-            '--window-position=0,0',
-            '--ignore-certifcate-errors',
-            '--ignore-certifcate-errors-spki-list',
-        ]
-    });
+
+    let browser;
+
+    // --- ЛОГИКА ЗАПУСКА БРАУЗЕРА (ДЛЯ ОБЛАКА И LOCAL) ---
+    if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+        // Настройки для Vercel / Render
+        browser = await chromium.launch({
+            args: sparticuzChromium.args,
+            executablePath: await sparticuzChromium.executablePath(),
+            headless: true,
+        });
+    } else {
+        // Твои локальные настройки с анти-детектом
+        console.log('[!] Запуск локального Chromium...');
+        browser = await chromium.launch({
+            headless: true,
+            args: [
+                '--disable-blink-features=AutomationControlled',
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-infobars',
+                '--ignore-certificate-errors',
+            ]
+        });
+    }
+
     const context = await browser.newContext({
         userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
         viewport: { width: 1280, height: 720 },
-        deviceScaleFactor: 1,
-        hasTouch: false,
-        isMobile: false,
-        javaScriptEnabled: true,
         locale: 'ru-RU',
         timezoneId: 'Asia/Almaty'
     });
@@ -51,7 +63,7 @@ async function scrapeSchedule(username, password) {
 
     const page = await context.newPage();
 
-    // Скрываем признаки автоматизации (navigator.webdriver и др.)
+    // Твой скрипт скрытия автоматизации
     await page.addInitScript(() => {
         Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
         window.chrome = { runtime: {} };
@@ -59,46 +71,47 @@ async function scrapeSchedule(username, password) {
         Object.defineProperty(navigator, 'languages', { get: () => ['ru-RU', 'ru'] });
     });
 
-    page.on('console', msg => {
-        if (msg.type() === 'error') console.log(`[BROWSER ERR] ${msg.text()}`);
-    });
-
     try {
+        // 1. Логин
         await page.goto('https://univer.kstu.kz/user/login', { waitUntil: 'domcontentloaded' });
         await page.fill('input[type="text"]', username);
         await page.fill('input[type="password"]', password);
-        await page.click('input[type="submit"]');
 
-        // Ждем перехода после логина или сообщения об ошибке
-        await page.waitForTimeout(3000);
+        // Кликаем и ждем навигации (более надежно, чем просто таймаут)
+        await Promise.all([
+            page.click('input[type="submit"]'),
+            page.waitForNavigation({ waitUntil: 'networkidle', timeout: 15000 }).catch(() => { })
+        ]);
 
         if (page.url().includes('login')) {
-            console.log('[!] Ошибка: Не удалось войти в систему. Возможно, неверный пароль.');
-            await page.screenshot({ path: 'login_failed.png' });
+            console.log('[!] Ошибка: Не удалось войти.');
             throw new Error('Login failed');
         }
 
-        console.log('[!] Принудительная установка RU языка...');
+        // 2. Смена языка
+        console.log('[!] Установка RU языка...');
         await page.goto('https://univer.kstu.kz/lang/change/ru/', { waitUntil: 'domcontentloaded' });
         await page.waitForTimeout(1000);
 
+        // 3. Переход к расписанию
         const { monday, sunday } = getWeekRange();
         const scheduleUrl = `https://univer.kstu.kz/student/myschedule/2025/2/${monday}/${sunday}/?lang=ru`;
-        console.log(`[!] Перехожу по ссылке: ${scheduleUrl}`);
+        console.log(`[!] Перехожу: ${scheduleUrl}`);
 
-        await page.goto(scheduleUrl, { waitUntil: 'load', timeout: 30000 });
+        await page.goto(scheduleUrl, { waitUntil: 'networkidle', timeout: 30000 });
 
         try {
             await page.waitForSelector('.schedule', { timeout: 15000 });
         } catch (e) {
-            console.log('[!] Таймаут: Таблица .schedule не найдена. Делаю скриншот...');
+            console.log('[!] Таймаут: .schedule не найдена.');
             await page.screenshot({ path: 'schedule_not_found.png', fullPage: true });
             throw e;
         }
 
+        // 4. Парсинг (твой evaluate без изменений)
         const resultObject = await page.evaluate(() => {
             const rows = Array.from(document.querySelectorAll('.schedule tr')).slice(1);
-            if (rows.length === 0) return { parsedData: [], debug: "No rows found" };
+            if (rows.length === 0) return { parsedData: [] };
 
             const parsedData = rows.map((row) => {
                 const allCells = Array.from(row.children);
@@ -123,8 +136,7 @@ async function scrapeSchedule(username, password) {
                 }
 
                 const dayCells = allCells.filter(c =>
-                    c.tagName === 'TD' &&
-                    (c.querySelector('.groups') || c.classList.contains('field'))
+                    c.tagName === 'TD' && (c.querySelector('.groups') || c.classList.contains('field'))
                 ).slice(0, 6);
 
                 return dayCells.map(cell => {
@@ -133,49 +145,24 @@ async function scrapeSchedule(username, password) {
                         const teachers = div.querySelectorAll('.teacher');
                         const params = div.querySelectorAll('.params span');
                         const fullText = div.innerText.toLowerCase();
-
-                        let type = 'all';
-                        if (fullText.includes('чис')) type = 'numerator';
-                        if (fullText.includes('знам')) type = 'denominator';
-
-                        const subjectText = teachers[0]?.innerText.trim() || '';
-                        const teacherText = teachers[1]?.innerText.trim() || '';
-
-                        const roomText = Array.from(params)
-                            .map(p => p.innerText.trim())
-                            .join(' ')
-                            .replace(/\s+/g, ' ')
-                            .replace(/([А-Я]+)(Ауд)/g, '$1 $2');
+                        let type = fullText.includes('чис') ? 'numerator' : (fullText.includes('знам') ? 'denominator' : 'all');
 
                         return {
                             time: rowTime,
-                            subject: subjectText,
-                            teacher: teacherText,
-                            room: roomText,
-                            type: type
+                            subject: teachers[0]?.innerText.trim() || '',
+                            teacher: teachers[1]?.innerText.trim() || '',
+                            room: Array.from(params).map(p => p.innerText.trim()).join(' ').replace(/\s+/g, ' '),
+                            type
                         };
                     });
                 });
             }).filter(r => r !== null);
 
-            const firstValidRow = rows.find(r => r.textContent.match(/\d/));
-            const debugInfo = firstValidRow ? firstValidRow.textContent.trim().substring(0, 50) : "No data";
-
-            return { parsedData, debug: debugInfo };
+            return { parsedData };
         });
 
-        const finalParsedData = resultObject.parsedData;
-
-        if (finalParsedData.length > 0) {
-            const firstRowWithTime = finalParsedData.find(row => row.some(day => day.some(lesson => lesson.time)));
-            const lessonWithTime = firstRowWithTime?.find(day => day.length > 0)?.[0];
-            if (lessonWithTime) {
-                console.log(`[OK] Данные получены. Первая пара: ${lessonWithTime.time}`);
-            }
-        }
-
         await browser.close();
-        return finalParsedData;
+        return resultObject.parsedData;
 
     } catch (err) {
         console.error('!!! ОШИБКА:', err.message);
