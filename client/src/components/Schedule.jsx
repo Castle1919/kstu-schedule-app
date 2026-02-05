@@ -31,20 +31,20 @@ export default function Schedule() {
         setTheme(prev => prev === 'light' ? 'dark' : 'light');
     };
 
-    // Состояние данных
-    const [schedule, setSchedule] = useState(() => {
+    // Состояние данных (убрали setSchedule, так как он не используется)
+    const schedule = (() => {
         const saved = localStorage.getItem('userSchedule');
         return saved ? JSON.parse(saved) : [];
-    });
+    })();
 
     const [refreshing, setRefreshing] = useState(false);
     const username = localStorage.getItem('username') || '';
-    const password = localStorage.getItem('password') || '';
 
     const [selectedWeekType, setSelectedWeekType] = useState(initialWeekType);
     const [currentDate, setCurrentDate] = useState('');
 
     const { weekNumber: currentWeekNumber, weekType: currentWeekType } = getWeekInfo();
+
     useEffect(() => {
         if (!schedule || schedule.length === 0) {
             navigate('/');
@@ -55,19 +55,16 @@ export default function Schedule() {
         const dateStr = new Date().toLocaleDateString('ru-RU', options);
         setCurrentDate(dateStr.charAt(0).toUpperCase() + dateStr.slice(1));
 
-        // Авто-обновление если прошло больше 6 часов
         const lastUpdate = localStorage.getItem('lastUpdate');
         if (lastUpdate) {
             const diff = Date.now() - parseInt(lastUpdate);
             if (diff > 6 * 60 * 60 * 1000) {
-                console.log('Данные устарели, запускаю авто-обновление...');
-
-                // Чтобы ESLint не ругался, вызываем логику обновления напрямую
                 const autoRefresh = async () => {
                     const storedUser = localStorage.getItem('username');
                     const storedPass = localStorage.getItem('password');
                     if (!storedUser || !storedPass) return;
 
+                    setRefreshing(true); // Теперь переменная используется
                     try {
                         const response = await axios.post('https://kstu-schedule-app-server.vercel.app/api/schedule', {
                             username: storedUser,
@@ -80,14 +77,14 @@ export default function Schedule() {
                         }
                     } catch (err) {
                         console.error("Авто-обновление не удалось:", err);
+                    } finally {
+                        setRefreshing(false);
                     }
                 };
-
                 autoRefresh();
             }
         }
     }, [navigate, schedule]);
-
 
     const filteredLessons = schedule.map((row) =>
         row.map((day) => {
@@ -128,7 +125,7 @@ export default function Schedule() {
         <div className={styles.container}>
             <div className={styles.headerContainer}>
                 <div className={styles.headerLeft}>
-                    <div className={styles.greeting}>Привет, {username}! 👋</div>
+                    <div className={styles.greeting}>Привет, {username}! 👋 {refreshing && <span style={{ fontSize: '10px' }}>(обновление...)</span>}</div>
                     <div className={styles.date}>{currentDate}</div>
                 </div>
                 <div className={styles.headerCenter}>
