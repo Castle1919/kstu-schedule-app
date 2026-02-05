@@ -32,14 +32,7 @@ function Login() {
     setError('');
     setLoading(true);
 
-    try {
-      const response = await axios.post(`${API_URL}/api/schedule`, {
-        username,
-        password
-      });
-    } catch (err) {
-      console.error(err);
-    }
+
     if (e) e.preventDefault();
 
     if (!username || !password) {

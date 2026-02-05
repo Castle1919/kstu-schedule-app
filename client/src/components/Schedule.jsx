@@ -87,25 +87,7 @@ export default function Schedule() {
             }
         }
     }, [navigate, schedule]);
-    const handleRefresh = async () => {
-        if (refreshing) return;
-        setRefreshing(true);
-        try {
-            const response = await axios.post('https://kstu-schedule-app-server.vercel.app/api/schedule', {
-                username,
-                password
-            });
-            if (response.data && Array.isArray(response.data)) {
-                setSchedule(response.data);
-                localStorage.setItem('userSchedule', JSON.stringify(response.data));
-                localStorage.setItem('lastUpdate', Date.now().toString());
-            }
-        } catch (e) {
-            console.error('Ошибка при обновлении:', e);
-        } finally {
-            setRefreshing(false);
-        }
-    };
+
 
     const filteredLessons = schedule.map((row) =>
         row.map((day) => {
