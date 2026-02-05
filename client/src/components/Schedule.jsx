@@ -18,33 +18,29 @@ const { weekType: initialWeekType } = getWeekInfo();
 export default function Schedule() {
     const navigate = useNavigate();
 
-    // Сразу инициализируем состояние из localStorage
-    const [schedule, setSchedule] = useState(() => {
+    // Оставили только переменную schedule, так как мы её не меняем здесь
+    const schedule = (() => {
         const saved = localStorage.getItem('userSchedule');
         return saved ? JSON.parse(saved) : [];
-    });
+    })();
 
     const [selectedWeekType, setSelectedWeekType] = useState(initialWeekType);
-    const [loading, setLoading] = useState(false); // Загрузка больше не нужна для API
-    const [username, setUsername] = useState(localStorage.getItem('username') || '');
+    const username = localStorage.getItem('username') || '';
     const [currentDate, setCurrentDate] = useState('');
 
     const { weekNumber: currentWeekNumber, weekType: currentWeekType } = getWeekInfo();
 
     useEffect(() => {
-        // Если данных нет — отправляем логиниться
         if (!schedule || schedule.length === 0) {
             navigate('/');
             return;
         }
 
-        // Установка красивой даты
         const options = { weekday: 'long', day: 'numeric', month: 'long' };
         const dateStr = new Date().toLocaleDateString('ru-RU', options);
         setCurrentDate(dateStr.charAt(0).toUpperCase() + dateStr.slice(1));
     }, [navigate, schedule]);
 
-    // Логика фильтрации уроков (осталась без изменений)
     const filteredLessons = schedule.map(row =>
         row.map(day =>
             Array.isArray(day) ? day.filter(lesson =>
