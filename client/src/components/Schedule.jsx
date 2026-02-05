@@ -45,7 +45,6 @@ export default function Schedule() {
     const [currentDate, setCurrentDate] = useState('');
 
     const { weekNumber: currentWeekNumber, weekType: currentWeekType } = getWeekInfo();
-
     useEffect(() => {
         if (!schedule || schedule.length === 0) {
             navigate('/');
@@ -62,11 +61,32 @@ export default function Schedule() {
             const diff = Date.now() - parseInt(lastUpdate);
             if (diff > 6 * 60 * 60 * 1000) {
                 console.log('Данные устарели, запускаю авто-обновление...');
-                handleRefresh();
+
+                // Чтобы ESLint не ругался, вызываем логику обновления напрямую
+                const autoRefresh = async () => {
+                    const storedUser = localStorage.getItem('username');
+                    const storedPass = localStorage.getItem('password');
+                    if (!storedUser || !storedPass) return;
+
+                    try {
+                        const response = await axios.post('https://kstu-schedule-app-server.vercel.app/api/schedule', {
+                            username: storedUser,
+                            password: storedPass
+                        });
+                        if (response.data) {
+                            localStorage.setItem('userSchedule', JSON.stringify(response.data));
+                            localStorage.setItem('lastUpdate', Date.now().toString());
+                            window.location.reload();
+                        }
+                    } catch (err) {
+                        console.error("Авто-обновление не удалось:", err);
+                    }
+                };
+
+                autoRefresh();
             }
         }
     }, [navigate, schedule]);
-
     const handleRefresh = async () => {
         if (refreshing) return;
         setRefreshing(true);
