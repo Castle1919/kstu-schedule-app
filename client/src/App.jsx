@@ -5,8 +5,10 @@ import styles from './App.module.css';
 
 function Login() {
   const navigate = useNavigate();
+  // Состояние текущей темы (светлая/темная)
   const [theme] = useState(localStorage.getItem('theme') || 'light');
 
+  // Применяем тему к корневому элементу при загрузке
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
@@ -16,10 +18,12 @@ function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Определение адреса API в зависимости от окружения
   const API_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:5000'
     : 'https://kstu-schedule-app-server.vercel.app';
 
+  // Обработка входа и получения расписания
   const handleLogin = async (e) => {
 
     if (e) e.preventDefault();
@@ -33,12 +37,7 @@ function Login() {
     setLoading(true);
 
 
-    if (e) e.preventDefault();
 
-    if (!username || !password) {
-      setError('Заполните все поля');
-      return;
-    }
 
     try {
       console.log('Попытка входа для:', username);
@@ -60,8 +59,7 @@ function Login() {
         localStorage.setItem('password', password);
         localStorage.setItem('userSchedule', JSON.stringify(response.data));
 
-        // Маленькая хитрость: добавляем метку времени, чтобы страница расписания 
-        // поняла, что данные обновились
+        // Маленькая хитрость: добавляем метку времени, чтобы страница расписания поняла, что данные обновились
         localStorage.setItem('lastUpdate', Date.now().toString());
 
         navigate('/schedule');

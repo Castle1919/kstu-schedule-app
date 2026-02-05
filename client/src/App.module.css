@@ -1,3 +1,4 @@
+/* Основной контейнер страницы логина */
 .page {
   min-height: 100vh;
   background: var(--bg-gradient);
@@ -7,6 +8,7 @@
   transition: background 0.3s;
 }
 
+/* Карточка входа */
 .card {
   width: 100%;
   max-width: 380px;
@@ -41,6 +43,7 @@
   color: var(--secondary-text);
 }
 
+/* Стили полей ввода */
 .form {
   display: flex;
   flex-direction: column;
@@ -70,11 +73,13 @@
   transition: all 0.2s ease;
 }
 
+/* Фокус на инпуте */
 .field input:focus {
   border-color: #0096de;
   box-shadow: 0 0 0 2px rgba(0, 150, 222, 0.15);
 }
 
+/* Кнопка входа */
 .button {
   margin-top: 10px;
   padding: 12px;
@@ -93,8 +98,12 @@
   transform: translateY(-1px);
 }
 
-.button:active {
-  transform: translateY(0);
+/* Адаптив для маленьких экранов */
+@media (max-width: 420px) {
+  .card {
+    margin: 0 12px;
+    padding: 24px 20px;
+  }
 }
 
 @keyframes fadeIn {
@@ -106,13 +115,5 @@
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-/* mobile */
-@media (max-width: 420px) {
-  .card {
-    margin: 0 12px;
-    padding: 24px 20px;
   }
 }

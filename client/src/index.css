@@ -1,9 +1,11 @@
+/* Сброс бокс-модели для всех элементов */
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
 
+/* Глобальные переменные для Светлой Темы */
 :root {
   --bg-color: #f7f9fc;
   --bg-gradient: linear-gradient(135deg, #eef3f8, #f7f9fc);
@@ -21,6 +23,7 @@
   --active-secondary: #374151;
 }
 
+/* Переменные для Темной Темы (OLED - чистый черный) */
 [data-theme='dark'] {
   --bg-color: #000000;
   --bg-gradient: #000000;

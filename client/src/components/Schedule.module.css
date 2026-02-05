@@ -1,5 +1,4 @@
-/* ===== GRID ===== */
-
+/* Сетка расписания: 6 колонок (по одной на каждый учебный день) */
 .grid {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
@@ -7,8 +6,7 @@
   animation: fadeIn 0.4s ease;
 }
 
-/* ===== DAYS ===== */
-
+/* Заголовки дней (используются на десктопе) */
 .daysHeader {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
@@ -25,6 +23,7 @@
   padding: 10px 4px;
 }
 
+/* Колонки дней: контейнер для карточек занятий */
 .dayColumn {
   background: var(--input-bg);
   border-radius: 14px;
@@ -40,6 +39,7 @@
   --lesson-margin: 12px;
 }
 
+/* Карточка одного занятия (пары) */
 .lesson {
   background: var(--lesson-bg);
   border-radius: 12px;
@@ -52,6 +52,7 @@
   transition: transform 0.2s, background 0.3s;
 }
 
+/* Стили для активной (текущей) пары */
 .activeLesson {
   border: 2px solid #22c55e !important;
   background-color: #dcfce7 !important;
@@ -102,29 +103,19 @@
   padding: 20px 6px;
 }
 
-/* ===== SWITCH ===== */
-
+/* Переключатель недель (Числитель / Знаменатель) */
 .switch {
   position: relative;
   display: flex;
   width: calc(100% - 32px);
-  /* Отступы по бокам */
   max-width: 420px;
   box-sizing: border-box;
   background: var(--tab-bg);
   border-radius: 18px;
   padding: 4px;
-  /* Чуть меньше паддинг */
   margin: 20px auto;
   font-size: 16px;
   box-shadow: inset 0 0 0 1px var(--border-color);
-}
-
-@media (max-width: 400px) {
-  .switch {
-    font-size: 14px;
-    width: calc(100% - 24px);
-  }
 }
 
 .tab {
@@ -215,8 +206,7 @@
   }
 }
 
-/* ===== HEADER ===== */
-
+/* Шапка приложения с информацией о пользователе и дате */
 .headerContainer {
   position: relative;
   display: flex;
@@ -256,10 +246,22 @@
   color: var(--text-color);
 }
 
-.date {
-  font-size: 14px;
+.dateContainer {
+  display: flex;
+  flex-direction: column;
+  margin-top: 4px;
+}
+
+.dayName {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.dateDetails {
+  font-size: 12px;
   color: var(--secondary-text);
-  margin-top: 2px;
+  opacity: 0.8;
 }
 
 .logoutBtn {
@@ -279,21 +281,16 @@
 }
 
 
-/* ===== MOBILE TABS ===== */
-
+/* Табы для переключения дней на мобильных устройствах */
 .mobileTabs {
   display: none;
-  /* Скрыто на десктопе */
   gap: 8px;
   margin-bottom: 20px;
   overflow-x: auto;
   padding-bottom: 12px;
-  /* Место для ползунка */
   scrollbar-width: thin;
-  /* Firefox */
   scrollbar-color: #cbd5e1 transparent;
   justify-content: center;
-  /* Центрируем табы */
 }
 
 /* Стили ползунка для Chrome/Safari */
@@ -413,16 +410,22 @@
     animation: fadeIn 0.3s ease;
   }
 
-  /* Header Responsive Logic */
-  /* Чтобы приветствие не перекрывало номер недели на мобилках */
+  .headerContainer {
+    flex-wrap: wrap;
+    padding: 14px;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
   .headerCenter {
     position: static;
     transform: none;
     order: 3;
     width: 100%;
-    margin-top: 10px;
-    padding-top: 10px;
+    margin-top: 8px;
+    padding-top: 8px;
     border-top: 1px solid var(--border-color);
+    text-align: center;
   }
 
   .headerLeft {
@@ -433,17 +436,59 @@
 
   .headerRight {
     order: 2;
+    margin-top: 4px;
+    /* Чтобы кнопки выхода были чуть ниже относительно приветствия */
   }
 
   .greeting {
-    font-size: 18px;
+    font-size: 16px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
+  .dateContainer {
+    margin-top: 2px;
+  }
+
+  .dayName {
+    font-size: 14px;
+  }
+
+  .dateDetails {
+    font-size: 11px;
+    display: block;
+    /* Заставляем число и месяц уйти на новую строку */
+  }
+
   .weekNumber {
+    font-size: 14px;
+    width: 100%;
+  }
+
+  .weekType {
+    font-size: 11px;
+    width: 100%;
+  }
+}
+
+/* Дополнительная фикса для очень узких экранов (425px и меньше) */
+@media (max-width: 425px) {
+  .headerContainer {
+    padding: 12px;
+  }
+
+  .greeting {
     font-size: 15px;
+  }
+
+  .logoutBtn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .toggleIcon {
+    font-size: 18px;
   }
 }
 
@@ -453,6 +498,7 @@
   align-items: center;
   margin-right: 15px;
   cursor: pointer;
+  margin-top: -2px;
   user-select: none;
 }
 

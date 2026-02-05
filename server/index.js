@@ -4,16 +4,18 @@ import { chromium } from 'playwright-core';
 import sparticuzChromium from '@sparticuz/chromium';
 
 const app = express();
+// Настройка CORS для работы с фронтендом
 app.use(cors({
     origin: [
         'http://localhost:3000',
         'http://localhost:5173', // если используешь Vite
-        'https://твой-фронтенд.vercel.app' // замени на адрес своего фронта
+        'https://kstu-schedule-app-client.vercel.app' // замени на адрес своего фронта
     ],
     credentials: true
 }));
 app.use(express.json());
 
+// Функция для получения дат текущей недели (Пн - Вс)
 function getWeekRange() {
     const now = new Date();
     const day = now.getDay() || 7;
@@ -26,6 +28,7 @@ function getWeekRange() {
 }
 
 
+// Основная функция парсинга расписания
 async function scrapeSchedule(username, password) {
     console.log(`\n[!] Начинаю парсинг для: ${username}`);
 
@@ -58,6 +61,7 @@ async function scrapeSchedule(username, password) {
             });
         }
 
+        // Создаем контекст браузера с имитацией обычного пользователя
         const context = await browser.newContext({
             userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             viewport: { width: 1280, height: 720 },
@@ -109,6 +113,7 @@ async function scrapeSchedule(username, password) {
 
         await page.goto(scheduleUrl, { waitUntil: 'networkidle', timeout: 30000 });
 
+        // Ждем появления таблицы расписания
         try {
             await page.waitForSelector('.schedule', { timeout: 15000 });
         } catch (e) {
@@ -187,6 +192,7 @@ async function scrapeSchedule(username, password) {
     }
 }
 
+// Эндпоинт для получения расписания
 app.post('/api/schedule', async (req, res) => {
     try {
         const result = await scrapeSchedule(req.body.username, req.body.password);
@@ -200,4 +206,5 @@ app.post('/api/schedule', async (req, res) => {
     }
 });
 
+// Запуск сервера
 app.listen(5000, () => console.log('Backend на 5000'));

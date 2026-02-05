@@ -5,29 +5,31 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom"
 import App from './App';
 import Schedule from './components/Schedule';
 
+// Конфигурация роутинга (путей) приложения
 const router = createBrowserRouter([
 	{
 		path: "/",
-		element: <App />
+		element: <App /> // Главная страница (логин)
 	},
 	{
-		path: "schedule",
-		element: <Schedule />
+		path: "/schedule",
+		element: <Schedule /> // Страница расписания
 	},
 ])
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-	<RouterProvider router={router} />
+	<React.StrictMode>
+		<RouterProvider router={router} />
+	</React.StrictMode>
 );
 
+// 3. РЕГИСТРАЦИЯ SERVICE WORKER 
 if ('serviceWorker' in navigator) {
 	window.addEventListener('load', () => {
-		navigator.serviceWorker.register('/sw.js').then(registration => {
-			console.log('SW registered: ', registration);
-		}).catch(registrationError => {
-			console.log('SW registration failed: ', registrationError);
-		});
+		navigator.serviceWorker.register('/sw.js')
+			.then(reg => console.log('SW зарегистрирован!', reg))
+			.catch(err => console.log('Ошибка при регистрации SW', err));
 	});
 }
 
