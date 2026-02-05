@@ -45,7 +45,7 @@ export default function Schedule() {
 
             try {
                 setLoading(true);
-                const response = await axios.post('http://localhost:5000/api/schedule', {
+                const response = await axios.post('https://kstu-schedule-app-server.vercel.app/api/schedule', {
                     username: storedUser,
                     password: storedPass
                 });
