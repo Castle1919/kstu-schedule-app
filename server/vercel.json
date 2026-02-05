@@ -1,21 +1,32 @@
 {
     "version": 2,
-    "builds": [
+    "rewrites": [
         {
-            "src": "index.js",
-            "use": "@vercel/node"
+            "source": "/api/(.*)",
+            "destination": "/index.js"
         }
     ],
-    "routes": [
+    "headers": [
         {
-            "src": "/api/(.*)",
-            "headers": {
-                "Access-Control-Allow-Credentials": "true",
-                "Access-Control-Allow-Origin": "https://kstu-schedule-app-client.vercel.app",
-                "Access-Control-Allow-Methods": "GET,OPTIONS,PATCH,DELETE,POST,PUT",
-                "Access-Control-Allow-Headers": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
-            },
-            "dest": "index.js"
+            "source": "/api/(.*)",
+            "headers": [
+                {
+                    "key": "Access-Control-Allow-Credentials",
+                    "value": "true"
+                },
+                {
+                    "key": "Access-Control-Allow-Origin",
+                    "value": "https://kstu-schedule-app-client.vercel.app"
+                },
+                {
+                    "key": "Access-Control-Allow-Methods",
+                    "value": "GET,OPTIONS,PATCH,DELETE,POST,PUT"
+                },
+                {
+                    "key": "Access-Control-Allow-Headers",
+                    "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+                }
+            ]
         }
     ],
     "functions": {
