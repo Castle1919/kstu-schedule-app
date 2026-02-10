@@ -538,3 +538,27 @@
   display: inline-block;
   animation: spin 1s linear infinite;
 }
+
+/* ===== SKELETON LOADING ===== */
+.skeleton {
+  background: linear-gradient(90deg, var(--card-bg) 25%, var(--border-color) 50%, var(--card-bg) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeletonLesson {
+  min-height: 120px;
+  margin-bottom: 12px;
+  opacity: 0.6;
+}

@@ -2,6 +2,7 @@ import axios from 'axios';
 import { wrapper } from 'axios-cookiejar-support';
 import * as cheerio from 'cheerio';
 import { format, startOfWeek, addDays, getMonth, getYear, differenceInWeeks } from 'date-fns';
+import { sharedAgent } from './auth.js';
 
 // Заголовки для имитации браузера
 const DEFAULT_HEADERS = {
@@ -53,10 +54,16 @@ export function getSemesterInfo() {
  * Загрузка HTML-страницы расписания с сайта Универ
  */
 export async function fetchSchedule(jar) {
-    const client = wrapper(axios.create({ jar, headers: DEFAULT_HEADERS }));
+    const client = wrapper(axios.create({
+        jar,
+        headers: DEFAULT_HEADERS,
+        httpsAgent: sharedAgent // Используем общий Keep-Alive агент
+    }));
+
     const { year, semester, start, end } = getSemesterInfo();
 
-    // Установка русского языка в системе
+    // Параллельные запросы здесь не нужны, так как установка языка — это сайд-эффект на сервере Универа.
+    // Однако, мы используем один и тот же клиент для сохранения сессии.
     await client.get('https://univer.kstu.kz/lang/change/ru/');
 
     const scheduleUrl = `https://univer.kstu.kz/student/myschedule/${year}/${semester}/${start}/${end}/`;
@@ -81,11 +88,11 @@ export function parseSchedule(html) {
 
     // Проверка на редирект (если сессия истекла)
     if ($('input[name="login"]').length > 0 && pageTitle.toLowerCase().includes('вход')) {
-        return [];
+        return null; // Возвращаем null вместо [], чтобы сервер понял, что сессия протухла
     }
 
     const rows = $('.schedule tr');
-    const lessonsRows = rows.slice(1); // Пропускаем заголовок таблицы
+    const lessonsRows = rows.slice(1);
 
     const clean = (text) => (text || "").trim().replace(/\s+/g, ' ');
     const cleanSubject = (text) => {

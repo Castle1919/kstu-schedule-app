@@ -17,6 +17,7 @@
     "cors": "^2.8.5",
     "date-fns": "^4.1.0",
     "express": "^4.21.2",
+    "node-cache": "^5.1.2",
     "tough-cookie": "^6.0.0"
   }
 }

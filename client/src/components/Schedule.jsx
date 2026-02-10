@@ -6,10 +6,10 @@ import styles from './Schedule.module.css';
 const DAYS_OF_WEEK = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 
 /**
- * Локальный расчет параметров недели (резервный вариант)
+ * Резервный расчет недели
  */
 function getWeekInfo() {
-    const start = new Date(2026, 0, 26); // Дата начала семестра
+    const start = new Date(2026, 0, 26);
     const now = new Date();
     const diffDays = Math.floor((now - start) / (1000 * 60 * 60 * 24));
     const weekNumber = Math.min(Math.max(Math.floor(diffDays / 7) + 1, 1), 20);
@@ -17,111 +17,83 @@ function getWeekInfo() {
     return { weekNumber, weekType };
 }
 
-const { weekType: initialWeekType } = getWeekInfo();
-
 export default function Schedule() {
     const navigate = useNavigate();
 
-    // Определение API URL
     const API_URL = window.location.hostname === 'localhost'
         ? 'http://localhost:5000'
         : 'https://kstu-schedule-app-server.vercel.app';
 
-    // Состояние темы
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+    const [schedule, setSchedule] = useState(() => JSON.parse(localStorage.getItem('userSchedule') || '[]'));
+    const [refreshing, setRefreshing] = useState(false);
+    const [selectedWeekType, setSelectedWeekType] = useState(() => localStorage.getItem('serverWeekType') || getWeekInfo().weekType);
+    const [currentDate, setCurrentDate] = useState({ day: '', details: '' });
+    const [currentWeekNumber] = useState(() => localStorage.getItem('serverWeek') || getWeekInfo().weekNumber);
+    const [currentWeekType] = useState(() => localStorage.getItem('serverWeekType') || getWeekInfo().weekType);
 
-    // Применение темы
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
     }, [theme]);
 
-    const toggleTheme = () => {
-        setTheme(prev => prev === 'light' ? 'dark' : 'light');
-    };
-
-    // Загрузка расписания из localStorage
-    const [schedule] = useState(() => {
-        const saved = localStorage.getItem('userSchedule');
-        return saved ? JSON.parse(saved) : [];
-    });
-
-    const [refreshing, setRefreshing] = useState(false);
-    const username = localStorage.getItem('username') || '';
-
-    // Состояния для отображения недель
-    const [selectedWeekType, setSelectedWeekType] = useState(() => localStorage.getItem('serverWeekType') || initialWeekType);
-    const [currentDate, setCurrentDate] = useState({ day: '', details: '' });
-
-    const [currentWeekNumber] = useState(() => localStorage.getItem('serverWeek') || getWeekInfo().weekNumber);
-    const [currentWeekType] = useState(() => localStorage.getItem('serverWeekType') || getWeekInfo().weekType);
+    const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
     useEffect(() => {
-        // console.log('Загрузка страницы расписания.');
-
-        // Проверка авторизации
         if (!localStorage.getItem('isScheduleLoaded')) {
-            // console.warn('Доступ запрещен, перенаправление на логин');
             navigate('/');
             return;
         }
 
-        // Форматирование текущей даты на русском
+        // Дата
         const options = { weekday: 'long', day: 'numeric', month: 'long' };
         const dateStr = new Date().toLocaleDateString('ru-RU', options);
         const parts = dateStr.split(', ');
-
         if (parts.length === 2) {
-            setCurrentDate({
-                day: parts[0].charAt(0).toUpperCase() + parts[0].slice(1),
-                details: parts[1]
-            });
+            setCurrentDate({ day: parts[0].charAt(0).toUpperCase() + parts[0].slice(1), details: parts[1] });
         } else {
             setCurrentDate({ day: dateStr.charAt(0).toUpperCase() + dateStr.slice(1), details: '' });
         }
 
-        // Авто-обновление данных (раз в 6 часов)
-        const lastUpdate = localStorage.getItem('lastUpdate');
-        if (lastUpdate) {
-            const diff = Date.now() - parseInt(lastUpdate);
-            if (diff > 6 * 60 * 60 * 1000) {
-                const autoRefresh = async () => {
-                    const storedUser = localStorage.getItem('username');
-                    const storedPass = localStorage.getItem('password');
-                    if (!storedUser || !storedPass) return;
+        // Авто-обновление или проверка сессии
+        const checkAndRefresh = async () => {
+            const lastUpdate = localStorage.getItem('lastUpdate');
+            const diff = Date.now() - parseInt(lastUpdate || '0');
 
-                    setRefreshing(true);
-                    try {
-                        const response = await axios.post(`${API_URL}/api/schedule`, {
-                            username: storedUser,
-                            password: storedPass
-                        });
-                        if (response.data && response.data.schedule) {
-                            localStorage.setItem('userSchedule', JSON.stringify(response.data.schedule));
-                            localStorage.setItem('lastUpdate', Date.now().toString());
-                            window.location.reload();
+            // Если прошло больше часа, обновляем тихо в фоне (SWR)
+            if (diff > 60 * 60 * 1000) {
+                const user = localStorage.getItem('username');
+                const pass = localStorage.getItem('password');
+                const session = JSON.parse(localStorage.getItem('userSession') || 'null');
+
+                if (!user || !pass) return;
+
+                setRefreshing(true);
+                try {
+                    const res = await axios.post(`${API_URL}/api/schedule`, { username: user, password: pass, session });
+                    if (res.data) {
+                        setSchedule(res.data.schedule);
+                        localStorage.setItem('userSchedule', JSON.stringify(res.data.schedule));
+                        localStorage.setItem('lastUpdate', Date.now().toString());
+                        if (res.data.session) {
+                            localStorage.setItem('userSession', JSON.stringify(res.data.session));
                         }
-                    } catch (err) {
-                        // console.error("Ошибка авто-обновления:", err);
-                    } finally {
-                        setRefreshing(false);
                     }
-                };
-                autoRefresh();
+                } catch (e) {
+                    // console.error(e);
+                } finally {
+                    setRefreshing(false);
+                }
             }
-        }
-    }, [navigate, schedule, API_URL]);
+        };
 
-    // Фильтрация пар по выбранному типу недели (числитель/знаменатель)
+        checkAndRefresh();
+    }, [navigate, API_URL]);
+
     const filteredLessons = schedule.map((row) =>
-        row.map((day) => {
-            return Array.isArray(day) ? day.filter(lesson =>
-                lesson.type === 'all' || lesson.type === selectedWeekType
-            ) : [];
-        })
+        row.map((day) => Array.isArray(day) ? day.filter(l => l.type === 'all' || l.type === selectedWeekType) : [])
     );
 
-    // Определение индекса сегодняшнего дня (0 - Пн, 5 - Сб)
     const activeTodayIndex = (() => {
         const d = new Date().getDay();
         return d === 0 ? null : d - 1;
@@ -134,34 +106,32 @@ export default function Schedule() {
         navigate('/');
     };
 
-    /**
-     * Проверка, является ли пара текущей по времени
-     */
     const isLessonActive = (timeStr) => {
         if (!timeStr) return false;
         try {
             const cleanTime = timeStr.replace(/[^\d:.-–]/g, '');
             const parts = cleanTime.split(/[-–]/);
             if (parts.length !== 2) return false;
-
             const now = new Date();
-            const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
-
-            const getMinutes = (s) => {
-                const [h, m] = s.split(':').map(Number);
-                return h * 60 + m;
-            };
-
-            return currentTotalMinutes >= getMinutes(parts[0].trim()) &&
-                currentTotalMinutes < getMinutes(parts[1].trim());
+            const curr = now.getHours() * 60 + now.getMinutes();
+            const getM = (s) => s.split(':').map(Number).reduce((h, m) => h * 60 + m);
+            return curr >= getM(parts[0].trim()) && curr < getM(parts[1].trim());
         } catch (e) { return false; }
     };
+
+    // Компонент Skeleton для пар
+    const SkeletonCard = () => (
+        <div className={`${styles.lesson} ${styles.skeleton} ${styles.skeletonLesson}`}>
+            <div style={{ height: '20px', width: '40%', background: 'rgba(0,0,0,0.05)', borderRadius: '4px', marginBottom: '8px' }}></div>
+            <div style={{ height: '24px', width: '90%', background: 'rgba(0,0,0,0.05)', borderRadius: '4px' }}></div>
+        </div>
+    );
 
     return (
         <div className={styles.container}>
             <div className={styles.headerContainer}>
                 <div className={styles.headerLeft}>
-                    <div className={styles.greeting}>Привет, {username}! 👋 {refreshing && <span style={{ fontSize: '10px' }}>(обн...)</span>}</div>
+                    <div className={styles.greeting}>Привет! 👋</div>
                     <div className={styles.dateContainer}>
                         <span className={styles.dayName}>{currentDate.day}</span>
                         <span className={styles.dateDetails}>{currentDate.details}</span>
@@ -169,12 +139,10 @@ export default function Schedule() {
                 </div>
                 <div className={styles.headerCenter}>
                     <div className={styles.weekNumber}>Неделя {currentWeekNumber}</div>
-                    <div className={styles.weekType}>
-                        {currentWeekType === 'numerator' ? 'Числитель' : 'Знаменатель'}
-                    </div>
+                    <div className={styles.weekType}>{currentWeekType === 'numerator' ? 'Числитель' : 'Знаменатель'}</div>
                 </div>
                 <div className={styles.headerRight} style={{ display: 'flex', alignItems: 'center' }}>
-                    <div className={styles.themeToggle} onClick={toggleTheme} title="Переключить тему">
+                    <div className={styles.themeToggle} onClick={toggleTheme} title="Тема">
                         <span className={styles.toggleIcon}>{theme === 'light' ? '🌙' : '☀️'}</span>
                     </div>
                     <button onClick={handleLogout} className={styles.logoutBtn}>Выйти</button>
@@ -189,11 +157,9 @@ export default function Schedule() {
                 <div className={styles.slider}></div>
             </div>
 
-            {/* Табы для мобильной версии */}
             <div className={styles.mobileTabs}>
                 {DAYS_OF_WEEK.map((day, idx) => (
-                    <div key={idx}
-                        className={`${styles.mobileTab} ${selectedDay === idx ? styles.activeTab : ''}`}
+                    <div key={idx} className={`${styles.mobileTab} ${selectedDay === idx ? styles.activeTab : ''}`}
                         onClick={() => setSelectedDay(idx)}>{day}</div>
                 ))}
             </div>
@@ -201,36 +167,29 @@ export default function Schedule() {
             <div className={styles.grid}>
                 {DAYS_OF_WEEK.map((dayName, dayIndex) => {
                     const dayLessons = filteredLessons.map(row => row[dayIndex] || []).flat();
-                    // Подсветка дня только если выбранная неделя совпадает с реальной текущей
                     const isToday = dayIndex === activeTodayIndex && selectedWeekType === currentWeekType;
                     const isColumnVisible = dayIndex === selectedDay;
 
                     return (
-                        <div key={dayIndex}
-                            className={`${styles.dayColumn} ${isToday ? styles.today : ''} ${isColumnVisible ? styles.mobileVisible : ''}`}>
+                        <div key={dayIndex} className={`${styles.dayColumn} ${isToday ? styles.today : ''} ${isColumnVisible ? styles.mobileVisible : ''}`}>
                             <div className={styles.mobileDayTitle}>{dayName}</div>
 
-                            {dayLessons.length === 0 ? (
+                            {refreshing && dayLessons.length === 0 ? (
+                                <>
+                                    <SkeletonCard />
+                                    <SkeletonCard />
+                                    <SkeletonCard />
+                                </>
+                            ) : dayLessons.length === 0 ? (
                                 <div className={styles.noLessons}>Пар нет</div>
                             ) : (
                                 dayLessons.map((lesson, i) => {
                                     const activeNow = isToday && isLessonActive(lesson.time);
-
-                                    const cleanSubject = (text) => {
-                                        return text.replace(/Период с \d{2}\.\d{2} по \d{2}\.\d{2}/gi, '').trim();
-                                    };
-
                                     return (
-                                        <div key={i}
-                                            className={`${styles.lesson} ${activeNow ? styles.activeLesson : ''}`}
-                                        >
+                                        <div key={i} className={`${styles.lesson} ${activeNow ? styles.activeLesson : ''}`}>
                                             <div className={styles.topInfo}>
-                                                <div className={styles.time}>
-                                                    {lesson.time || "Время не указано"} {activeNow && '🔥'}
-                                                </div>
-                                                <div className={styles.subject}>
-                                                    {cleanSubject(lesson.subject)}
-                                                </div>
+                                                <div className={styles.time}>{lesson.time || "---"} {activeNow && '🔥'}</div>
+                                                <div className={styles.subject}>{lesson.subject}</div>
                                             </div>
                                             <div className={styles.bottomInfo}>
                                                 <div className={styles.teacher}>{lesson.teacher}</div>

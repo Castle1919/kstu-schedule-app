@@ -26,7 +26,6 @@ function Login() {
   // Обработка входа и получения расписания
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
-
     if (!username || !password) {
       setError('Заполните все поля');
       return;
@@ -36,40 +35,39 @@ function Login() {
     setLoading(true);
 
     try {
-      // console.log('Попытка входа для:', username);
-
-      // Очищаем локальное хранилище перед новым входом
-      localStorage.clear();
+      // Попытка входа с использованием существующей сессии (ускорение до 2сек)
+      const savedSession = localStorage.getItem('userSession');
+      const session = savedSession ? JSON.parse(savedSession) : null;
 
       const response = await axios.post(`${API_URL}/api/schedule`, {
         username,
-        password
+        password,
+        session
       });
 
       if (response.data && response.data.schedule) {
-        // console.log('Данные получены:', response.data);
-
-        // Сохраняем данные авторизации и расписания
         localStorage.setItem('username', username);
         localStorage.setItem('password', password);
         localStorage.setItem('userSchedule', JSON.stringify(response.data.schedule));
         localStorage.setItem('serverWeek', response.data.week);
         localStorage.setItem('serverWeekType', response.data.weekType);
-        localStorage.setItem('isScheduleLoaded', 'true');
 
-        // Устанавливаем метку времени обновления
+        // Сохраняем сессию для следующего раза (Уровень 2)
+        if (response.data.session) {
+          localStorage.setItem('userSession', JSON.stringify(response.data.session));
+        }
+
+        localStorage.setItem('isScheduleLoaded', 'true');
         localStorage.setItem('lastUpdate', Date.now().toString());
 
         navigate('/schedule');
       } else {
         setError('Сервер не прислал данные расписания.');
       }
-
     } catch (e) {
-      // console.error('Ошибка при входе:', e);
-
       if (e.response?.status === 401) {
         setError('Неверный логин или пароль');
+        localStorage.removeItem('userSession'); // Удаляем битую сессию
       } else {
         setError('Ошибка сервера. Попробуйте позже.');
       }
@@ -78,7 +76,6 @@ function Login() {
     }
   };
 
-  // Обработка нажатия Enter для входа
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       handleLogin();
