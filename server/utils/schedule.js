@@ -130,11 +130,12 @@ export function parseSchedule(html) {
             rowTime = firstCellText.split('\n')[0].trim();
         }
 
-        const dayCells = [];
-        const days = $row.find('td.field');
+        const rowCells = [];
+        // Пропускаем первую ячейку (время) и берем остальные 6 (Пн-Сб)
+        const dayColumns = allCells.slice(1);
 
         for (let j = 0; j < 6; j++) {
-            const cell = days.eq(j);
+            const cell = $(dayColumns[j]);
             const lessonsInDay = [];
             const lessonDivs = cell.find('div[style]');
 
@@ -163,15 +164,29 @@ export function parseSchedule(html) {
 
                 // Извлечение предмета и преподавателя
                 const pTag = $div.find('p');
+                // Регулярка для поиска фамилии преподавателя (с учетом казахских символов)
+                // Поддерживает: Фамилия И. О. или Фамилия И.О.
+                const teacherRegex = /([А-ЯЁӘҒҚҢӨҰҮҺІ][а-яёәғқңөұүһі\-]+\s+[А-ЯЁӘҒҚҢӨҰҮҺІ]\.\s*[А-ЯЁӘҒҚҢӨҰҮҺІ]\.)/;
+
+                // Извлекаем чистый текст из div
                 let combinedText = clean($div.text());
 
-                if (room) combinedText = combinedText.replace(room, '');
-                if (denomElem.length > 0) combinedText = combinedText.replace(clean(denomElem.text()), '');
+                // Удаляем кабинет и тип из текста, чтобы остался только Предмет + Преподаватель
+                if (room) {
+                    combinedText = combinedText.replace(room, '');
+                    const roomNoSpaces = room.replace(/\s+/g, '');
+                    combinedText = combinedText.replace(roomNoSpaces, '');
+                }
+
+                if (denomElem.length > 0) {
+                    const dt = clean(denomElem.text());
+                    combinedText = combinedText.replace(dt, '');
+                    combinedText = combinedText.replace(dt.replace(/\s+/g, ''), '');
+                }
+
                 combinedText = combinedText.replace(/Период с \d{2}\.\d{2} по \d{2}\.\d{2}/gi, '');
                 combinedText = clean(combinedText);
 
-                // Регулярка для поиска фамилии преподавателя
-                const teacherRegex = /([А-ЯЁ][а-яёА-ЯЁ\-]+\s+[А-ЯЁ]\.\s*[А-ЯЁ]\.)/;
                 const match = combinedText.match(teacherRegex);
 
                 let subject = combinedText;
@@ -188,7 +203,11 @@ export function parseSchedule(html) {
                     }
                 }
 
-                subject = cleanSubject(subject);
+                // Финальная очистка предмета от мусора
+                subject = cleanSubject(subject)
+                    .replace(/Ауд\.:.*/gi, '')
+                    .replace(/Кабинет:.*/gi, '')
+                    .trim();
                 subject = subject.replace(/[.,:;]+$/, "").trim();
 
                 if (subject) {
@@ -201,10 +220,11 @@ export function parseSchedule(html) {
                     });
                 }
             });
-            dayCells.push(lessonsInDay);
+            rowCells.push(lessonsInDay);
         }
-        parsedData.push(dayCells);
+        parsedData.push(rowCells);
     });
 
+    console.log(`[Parser] Обработка завершена. Всего строк: ${parsedData.length}`);
     return parsedData;
 }

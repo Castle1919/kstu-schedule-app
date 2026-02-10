@@ -32,6 +32,8 @@ export default function Schedule() {
     const [currentWeekNumber] = useState(() => localStorage.getItem('serverWeek') || getWeekInfo().weekNumber);
     const [currentWeekType] = useState(() => localStorage.getItem('serverWeekType') || getWeekInfo().weekType);
 
+    const user = localStorage.getItem('username') || '';
+
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
@@ -71,7 +73,7 @@ export default function Schedule() {
                 setRefreshing(true);
                 try {
                     const res = await axios.post(`${API_URL}/api/schedule`, { username: user, password: pass, session });
-                    if (res.data) {
+                    if (res.data && res.data.schedule) {
                         setSchedule(res.data.schedule);
                         localStorage.setItem('userSchedule', JSON.stringify(res.data.schedule));
                         localStorage.setItem('lastUpdate', Date.now().toString());
@@ -109,13 +111,23 @@ export default function Schedule() {
     const isLessonActive = (timeStr) => {
         if (!timeStr) return false;
         try {
-            const cleanTime = timeStr.replace(/[^\d:.-–]/g, '');
-            const parts = cleanTime.split(/[-–]/);
+            // Поддержка всех видов тире: -, –, —
+            const cleanTime = timeStr.replace(/\s+/g, '');
+            const parts = cleanTime.split(/[-–—]/);
             if (parts.length !== 2) return false;
+
             const now = new Date();
             const curr = now.getHours() * 60 + now.getMinutes();
-            const getM = (s) => s.split(':').map(Number).reduce((h, m) => h * 60 + m);
-            return curr >= getM(parts[0].trim()) && curr < getM(parts[1].trim());
+
+            const getM = (s) => {
+                const [h, m] = s.replace('.', ':').split(':').map(Number);
+                return h * 60 + m;
+            };
+
+            const startM = getM(parts[0]);
+            const endM = getM(parts[1]);
+
+            return curr >= startM && curr < endM;
         } catch (e) { return false; }
     };
 
@@ -131,7 +143,7 @@ export default function Schedule() {
         <div className={styles.container}>
             <div className={styles.headerContainer}>
                 <div className={styles.headerLeft}>
-                    <div className={styles.greeting}>Привет! 👋</div>
+                    <div className={styles.greeting}>Привет, {user}! 👋 {refreshing && <span style={{ fontSize: '10px' }}>(обн...)</span>}</div>
                     <div className={styles.dateContainer}>
                         <span className={styles.dayName}>{currentDate.day}</span>
                         <span className={styles.dateDetails}>{currentDate.details}</span>
@@ -157,6 +169,14 @@ export default function Schedule() {
                 <div className={styles.slider}></div>
             </div>
 
+            {/* Заголовки для десктопа */}
+            <div className={styles.daysHeader}>
+                {DAYS_OF_WEEK.map((day, idx) => (
+                    <div key={idx} className={styles.dayTitle}>{day}</div>
+                ))}
+            </div>
+
+            {/* Табы для мобилки */}
             <div className={styles.mobileTabs}>
                 {DAYS_OF_WEEK.map((day, idx) => (
                     <div key={idx} className={`${styles.mobileTab} ${selectedDay === idx ? styles.activeTab : ''}`}
@@ -172,7 +192,7 @@ export default function Schedule() {
 
                     return (
                         <div key={dayIndex} className={`${styles.dayColumn} ${isToday ? styles.today : ''} ${isColumnVisible ? styles.mobileVisible : ''}`}>
-                            <div className={styles.mobileDayTitle}>{dayName}</div>
+                            {/* <div className={styles.mobileDayTitle}>{dayName}</div> */}
 
                             {refreshing && dayLessons.length === 0 ? (
                                 <>

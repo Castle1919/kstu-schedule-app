@@ -19,6 +19,7 @@
   font-weight: 600;
   color: var(--text-color);
   background: var(--tab-bg);
+  /* border: 1px solid var(--border-color); */
   border-radius: 10px;
   padding: 10px 4px;
 }
@@ -305,6 +306,7 @@
   margin-bottom: 20px;
   overflow-x: auto;
   padding-bottom: 12px;
+  padding-left: 2px;
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 transparent;
   justify-content: center;
@@ -312,7 +314,7 @@
 
 /* Стили ползунка для Chrome/Safari */
 .mobileTabs::-webkit-scrollbar {
-  height: 6px;
+  height: 8px;
 }
 
 .mobileTabs::-webkit-scrollbar-track {
@@ -500,8 +502,8 @@
   }
 
   .logoutBtn {
-    padding: 6px 10px;
-    font-size: 12px;
+    padding: 9px 9px;
+    font-size: 13px;
   }
 
   .toggleIcon {
