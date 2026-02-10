@@ -2,9 +2,7 @@ import axios from 'axios';
 import { wrapper } from 'axios-cookiejar-support';
 import * as cheerio from 'cheerio';
 import { format, startOfWeek, addDays, getMonth, getYear, differenceInWeeks } from 'date-fns';
-import { sharedAgent } from './auth.js';
 
-// Заголовки для имитации браузера
 const DEFAULT_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
@@ -14,7 +12,7 @@ const DEFAULT_HEADERS = {
 };
 
 /**
- * Получение информации о текущем семестре и датах недели
+ * Расчет семестра и недели (26.01.2026 - начало учебы)
  */
 export function getSemesterInfo() {
     const now = new Date();
@@ -23,66 +21,59 @@ export function getSemesterInfo() {
 
     let semester, academicYear;
     if (month >= 9) {
-        semester = 1; // Осенний семестр
+        semester = 1;
         academicYear = year;
     } else {
-        semester = 2; // Весенний семестр
+        semester = 2;
         academicYear = year - 1;
     }
 
-    // Даты начала семестров по логике KSTU
-    const semesterStart = (semester === 1)
-        ? new Date(year, 8, 1) // 1 сентября
-        : new Date(year, 0, 26); // 26 января
+    const start = startOfWeek(now, { weekStartsOn: 1 });
+    const end = addDays(start, 6);
 
-    const monday = startOfWeek(now, { weekStartsOn: 1 });
-    const sunday = addDays(monday, 6);
-
-    // Расчет текущей недели учебного процесса
-    const weekNumber = Math.min(Math.max(differenceInWeeks(now, semesterStart) + 1, 1), 20);
+    // Точная дата начала 2-го семестра для КГТУ
+    const studyStart = new Date(2026, 0, 26);
+    const weekNumber = differenceInWeeks(now, studyStart) + 1;
 
     return {
         year: academicYear,
-        semester,
-        start: format(monday, 'dd.MM.yyyy'),
-        end: format(sunday, 'dd.MM.yyyy'),
-        weekNumber
+        semester: semester,
+        startDate: format(start, 'dd.MM.yyyy'),
+        endDate: format(end, 'dd.MM.yyyy'),
+        weekNumber: weekNumber > 0 ? weekNumber : 1
     };
 }
 
 /**
- * Загрузка HTML-страницы расписания с сайта Универ
+ * Загрузка страницы (с фиксом языка и кук)
  */
 export async function fetchSchedule(jar) {
-    const client = wrapper(axios.create({
-        jar,
-        headers: DEFAULT_HEADERS,
-        httpsAgent: sharedAgent // Используем общий Keep-Alive агент
-    }));
+    const client = wrapper(axios.create({ jar, headers: DEFAULT_HEADERS }));
+    const info = getSemesterInfo();
+    const scheduleUrl = `https://univer.kstu.kz/student/myschedule/${info.year}/${info.semester}/${info.startDate}/${info.endDate}/`;
 
-    const { year, semester, start, end } = getSemesterInfo();
+    try {
+        // Установка RU языка
+        await client.get('https://univer.kstu.kz/lang/change/ru/', {
+            headers: { 'Referer': scheduleUrl }
+        });
 
-    // Однако, мы используем один и тот же клиент для сохранения сессии.
-    console.log('[Schedule] Установка языка RU...');
-    await client.get('https://univer.kstu.kz/lang/change/ru/');
+        console.log(`[Schedule] Запрос страницы: ${scheduleUrl}`);
+        const response = await client.get(scheduleUrl);
 
-    const scheduleUrl = `https://univer.kstu.kz/student/myschedule/${year}/${semester}/${start}/${end}/`;
-
-    // Запрос страницы
-    console.log(`[Schedule] Запрос страницы: ${scheduleUrl}`);
-    const response = await client.get(scheduleUrl, {
-        headers: {
-            ...DEFAULT_HEADERS,
-            'Referer': 'https://univer.kstu.kz/student/myschedule/'
+        if (response.request.res.responseUrl && response.request.res.responseUrl.includes('login')) {
+            throw new Error('SessionExpired');
         }
-    });
 
-    console.log(`[Schedule] HTTP Статус: ${response.status}, Длина HTML: ${response.data.length}`);
-    return response.data;
+        return response.data;
+    } catch (error) {
+        console.error('[Schedule] Ошибка запроса:', error.message);
+        throw error;
+    }
 }
 
 /**
- * Парсинг HTML-кода расписания
+ * ТВОЙ ОРИГИНАЛЬНЫЙ ПАРСЕР (БЕЗ ИЗМЕНЕНИЙ В ЛОГИКЕ)
  */
 export function parseSchedule(html) {
     const $ = cheerio.load(html);
@@ -90,7 +81,7 @@ export function parseSchedule(html) {
 
     // Проверка на редирект (если сессия истекла)
     if ($('input[name="login"]').length > 0 && pageTitle.toLowerCase().includes('вход')) {
-        return null; // Возвращаем null вместо [], чтобы сервер понял, что сессия протухла
+        return null;
     }
 
     const rows = $('.schedule tr');
@@ -111,7 +102,6 @@ export function parseSchedule(html) {
         const allCells = $row.find('td, th');
         if (allCells.length < 2) return;
 
-        // Поиск времени пары через регулярное выражение
         const timeRegex = /\d{1,2}[:.]\d{2}[-–\s]+\d{1,2}[:.]\d{2}/;
         let rowTime = "";
         const firstCell = $(allCells[0]);
@@ -131,18 +121,17 @@ export function parseSchedule(html) {
         }
 
         const rowCells = [];
-        // Пропускаем первую ячейку (время) и берем остальные 6 (Пн-Сб)
         const dayColumns = allCells.slice(1);
 
         for (let j = 0; j < 6; j++) {
             const cell = $(dayColumns[j]);
             const lessonsInDay = [];
+            // Тот самый поиск по div[style]
             const lessonDivs = cell.find('div[style]');
 
             lessonDivs.each((k, div) => {
                 const $div = $(div);
 
-                // Извлечение типа недели
                 let type = 'all';
                 const denomElem = $div.find('.denominator');
                 if (denomElem.length > 0) {
@@ -151,7 +140,6 @@ export function parseSchedule(html) {
                     else if (dt.includes('знам')) type = 'denominator';
                 }
 
-                // Извлечение аудитории
                 let room = "";
                 const audElem = $div.find('.aud_faculty');
                 if (audElem.length > 0) {
@@ -162,16 +150,11 @@ export function parseSchedule(html) {
                     room = `${prefix} ${audienceStr}`.trim();
                 }
 
-                // Извлечение предмета и преподавателя
                 const pTag = $div.find('p');
-                // Регулярка для поиска фамилии преподавателя (с учетом казахских символов)
-                // Поддерживает: Фамилия И. О. или Фамилия И.О.
                 const teacherRegex = /([А-ЯЁӘҒҚҢӨҰҮҺІ][а-яёәғқңөұүһі\-]+\s+[А-ЯЁӘҒҚҢӨҰҮҺІ]\.\s*[А-ЯЁӘҒҚҢӨҰҮҺІ]\.)/;
 
-                // Извлекаем чистый текст из div
                 let combinedText = clean($div.text());
 
-                // Удаляем кабинет и тип из текста, чтобы остался только Предмет + Преподаватель
                 if (room) {
                     combinedText = combinedText.replace(room, '');
                     const roomNoSpaces = room.replace(/\s+/g, '');
@@ -203,7 +186,6 @@ export function parseSchedule(html) {
                     }
                 }
 
-                // Финальная очистка предмета от мусора
                 subject = cleanSubject(subject)
                     .replace(/Ауд\.:.*/gi, '')
                     .replace(/Кабинет:.*/gi, '')

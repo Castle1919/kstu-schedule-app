@@ -5,7 +5,7 @@ import { login, createJarFromCookies } from './utils/auth.js';
 import { getSemesterInfo, fetchSchedule, parseSchedule } from './utils/schedule.js';
 
 const app = express();
-// Уровень 3: Кэширование расписания (SWR) на 30 минут
+// Кэш на 30 минут (разгружаем сервер Универа)
 const scheduleCache = new NodeCache({ stdTTL: 1800, checkperiod: 600 });
 
 app.use(cors({
@@ -13,105 +13,125 @@ app.use(cors({
         'http://localhost:3000',
         'http://localhost:5173',
         'https://kstu-schedule-app-client.vercel.app'
+        // Добавь сюда свой домен новой версии, если он отличается
     ],
     credentials: true
 }));
 app.use(express.json());
 
-/**
- * Основная логика получения расписания
- * @param {string} username Логин
- * @param {string} password Пароль
- * @param {object} existingCookies Куки из браузера (aspxAuth, sessionId)
- */
+// Функция-оркестратор
 async function getScheduleData(username, password, existingCookies = null) {
-    console.log(`[API] Запрос расписания для: ${username}`);
     const cacheKey = `schedule_${username}`;
+    console.log(`[API] Запрос расписания для: ${username}`);
 
-    // Пытаемся взять из кэша
+    // 1. ПРОВЕРКА КЭША
+    // Мы отдаем кэш только если у нас ЕСТЬ сессия (existingCookies) и НЕТ попытки входа по паролю
+    // Если пользователь вводит пароль вручную — мы игнорируем кэш и идем проверять его в Универ
     const cachedData = scheduleCache.get(cacheKey);
-    if (cachedData) {
+    if (cachedData && existingCookies && !password) {
+        console.log(`[Cache] Данные отданы из кэша для: ${username}`);
         return { ...cachedData, fromCache: true };
     }
 
     let jar;
     let newSession = null;
 
-    // Уровень 2: Повторное использование сессии
-    if (existingCookies && existingCookies.aspxAuth) {
-        jar = await createJarFromCookies(existingCookies);
-        const html = await fetchSchedule(jar);
-        const parsed = parseSchedule(html);
-
-        if (parsed) {
-            const info = getSemesterInfo();
-            const result = {
-                schedule: parsed,
-                week: info.weekNumber,
-                weekType: info.weekNumber % 2 === 1 ? 'numerator' : 'denominator',
-                session: existingCookies // Сессия всё еще валидна
+    try {
+        // 2. ЛОГИКА АВТОРИЗАЦИИ
+        if (existingCookies && existingCookies.aspxAuth && !password) {
+            // Используем старые куки, только если не пришел новый пароль
+            console.log(`[API] Используем существующую сессию для: ${username}`);
+            jar = await createJarFromCookies(existingCookies);
+        } else {
+            // Если пришел пароль или нет сессии — ВСЕГДА идем на сервер Универа
+            console.log(`[API] Выполняем проверку логина/пароля для: ${username}`);
+            const authData = await login(username, password);
+            jar = authData.jar;
+            newSession = {
+                aspxAuth: authData.aspxAuth,
+                sessionId: authData.sessionId
             };
-            scheduleCache.set(cacheKey, result);
-            return result;
         }
+
+        // 3. ПОЛУЧЕНИЕ HTML
+        let html;
+        try {
+            html = await fetchSchedule(jar);
+        } catch (e) {
+            if (e.message === 'SessionExpired') {
+                if (password) {
+                    // Если даже с паролем говорит "сессия истекла", значит пароль не подошел или API тупит
+                    throw new Error('Invalid login or password');
+                }
+                console.log('[API] Сессия истекла. Повторная авторизация...');
+                const authData = await login(username, password);
+                jar = authData.jar;
+                newSession = { aspxAuth: authData.aspxAuth, sessionId: authData.sessionId };
+                html = await fetchSchedule(jar);
+            } else {
+                throw e;
+            }
+        }
+
+        // 4. ПАРСИНГ И РЕЗУЛЬТАТ
+        const parsedData = parseSchedule(html);
+
+        // Если парсер вернул null (в твоем коде это признак протухшей сессии)
+        if (parsedData === null) {
+            throw new Error('SessionExpired');
+        }
+
+        const info = getSemesterInfo();
+        console.log(`[API] Рассчитана неделя: ${info.weekNumber}`);
+
+        const result = {
+            schedule: parsedData || [],
+            week: info.weekNumber,
+            weekType: info.weekNumber % 2 === 1 ? 'numerator' : 'denominator',
+            session: newSession
+        };
+
+        // СОХРАНЯЕМ В КЭШ НА 1 ЧАС (3600 секунд)
+        if (parsedData && parsedData.length > 0) {
+            scheduleCache.set(cacheKey, result, 3600);
+        }
+
+        return result;
+
+    } catch (error) {
+        // КРИТИЧЕСКИЙ МОМЕНТ: Если пароль неверный — удаляем кэш подчистую!
+        if (error.message === 'Invalid login or password') {
+            console.warn(`[API] ОЧИСТКА КЭША для ${username} из-за ошибки входа`);
+            scheduleCache.del(cacheKey);
+        }
+        throw error; // Пробрасываем ошибку дальше, чтобы сработал статус 401
     }
-
-    // Если кук нет или они протухли — идем на полный логин
-    const auth = await login(username, password);
-    jar = auth.jar;
-    newSession = { aspxAuth: auth.aspxAuth, sessionId: auth.sessionId };
-
-    const html = await fetchSchedule(jar);
-    const parsedData = parseSchedule(html);
-    const info = getSemesterInfo();
-
-    const result = {
-        schedule: parsedData || [],
-        week: info.weekNumber,
-        weekType: info.weekNumber % 2 === 1 ? 'numerator' : 'denominator',
-        session: newSession
-    };
-
-    scheduleCache.set(cacheKey, result);
-    return result;
 }
 
-// Эндпоинт для запроса расписания
 app.post('/api/schedule', async (req, res) => {
     const { username, password, session } = req.body;
 
     if (!username || !password) {
-        return res.status(400).json({ error: 'Логин и пароль обязательны' });
+        return res.status(400).json({ error: 'Login and password required' });
     }
 
     try {
         const result = await getScheduleData(username, password, session);
         res.json(result);
     } catch (error) {
-        if (error.message === 'Invalid login or password') {
-            res.status(401).json({ error: 'Неверный логин или пароль' });
-        } else {
-            console.error('[API Error]', error);
-            res.status(500).json({
-                error: 'Внутренняя ошибка сервера',
-                message: error.message,
-                stack: error.stack
-            });
+        // Четкая обработка ошибок для фронтенда
+        if (error.message === 'Invalid login or password' || error.message === 'SessionExpired') {
+            console.warn(`[API] Ошибка доступа для ${username}: ${error.message}`);
+            return res.status(401).json({ error: 'Неверный логин или пароль' });
         }
+
+        console.error('[API] Server Error:', error);
+        res.status(500).json({
+            error: 'Внутренняя ошибка сервера',
+            details: error.message
+        });
     }
 });
 
-// Настройки для локального запуска
-const isMain = process.argv[1] && (
-    process.argv[1].endsWith('index.js') ||
-    process.argv[1].endsWith('index')
-);
-
-if (process.env.NODE_ENV !== 'production' && isMain) {
-    const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => {
-        console.log(`Бэкенд запущен на порту ${PORT}`)
-    });
-}
-
-export default app;
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

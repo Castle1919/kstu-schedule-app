@@ -3,24 +3,27 @@ import { wrapper } from 'axios-cookiejar-support';
 import { CookieJar } from 'tough-cookie';
 import https from 'https';
 
-// Уровень 1: HTTP Keep-Alive (Временно отключен для диагностики 500 ошибки на Vercel)
-// export const sharedAgent = new https.Agent({
-//     keepAlive: true,
-//     maxSockets: 100,
-//     keepAliveMsecs: 1000
-// });
-export const sharedAgent = undefined;
+// Настраиваем агент для переиспользования TCP-соединений (ускоряет запросы)
+export const sharedAgent = new https.Agent({
+    keepAlive: true,
+    maxSockets: 10, // Ограничиваем кол-во сокетов для Vercel
+    keepAliveMsecs: 15000 // Таймаут 15 сек
+});
 
 /**
- * Создает CookieJar из существующих кук
+ * Создает CookieJar и "размазывает" куки по всему домену .kstu.kz
+ * Это критично, чтобы авторизация с univerapi работала на основном сайте
  */
 export async function createJarFromCookies(rawCookies) {
     const jar = new CookieJar();
+    // Список доменов, куда нужно подсунуть куки
     const domains = ['.kstu.kz', 'univer.kstu.kz'];
 
     if (rawCookies && typeof rawCookies === 'object') {
+        // Если нам передали уже готовые токены (например, из кэша или фронта)
         for (const domain of domains) {
             const baseUrl = `https://${domain.startsWith('.') ? domain.substring(1) : domain}`;
+
             if (rawCookies.aspxAuth) {
                 await jar.setCookie(`.ASPXAUTH=${rawCookies.aspxAuth}; Domain=${domain}; Path=/`, baseUrl);
             }
@@ -33,38 +36,52 @@ export async function createJarFromCookies(rawCookies) {
 }
 
 /**
- * Функция авторизации в системе Универ
+ * Функция авторизации через скрытое API
  */
 export async function login(username, password) {
+    console.log(`[Auth] Попытка входа для пользователя: ${username}...`);
+
     const jar = new CookieJar();
     const client = wrapper(axios.create({
         jar,
-        httpsAgent: sharedAgent // Используем общий агент
+        // httpsAgent: sharedAgent,
+        // Важно: отключаем автоматический редирект, чтобы поймать куки сразу
+        maxRedirects: 0,
+        validateStatus: status => status >= 200 && status < 400 // Принимаем 302 как успех
     }));
 
+    // ИСПОЛЬЗУЕМ URLSearchParams ДЛЯ ПРАВИЛЬНОЙ КОДИРОВКИ СПЕЦСИМВОЛОВ (@, #, &)
+    const params = new URLSearchParams();
+    params.append('login', username);
+    params.append('password', password);
+
     const loginUrl = 'https://univerapi.kstu.kz/';
-    const params = new URLSearchParams({
-        login: username,
-        password: password
-    });
 
     try {
-        console.log(`[Auth] Попытка входа для ${username}...`);
-        const response = await client.get(loginUrl, { params });
+        // Отправляем запрос с правильно закодированными параметрами
+        const response = await client.get(`${loginUrl}?${params.toString()}`);
 
-        // Проверка наличия кук после авторизации
+        // Проверка 1: Если API вернуло JSON с ошибкой (код != 0)
+        if (response.data && typeof response.data === 'object') {
+            if (response.data.code !== 0) {
+                console.warn(`[Auth] Ошибка API: ${response.data.message}`);
+                throw new Error('Invalid login or password');
+            }
+        }
+
+        // Проверка 2: Ищем куки в ответе
         const cookies = await jar.getCookies(loginUrl);
         const aspxAuth = cookies.find(c => c.key === '.ASPXAUTH');
         const sessionId = cookies.find(c => c.key === 'ASP.NET_SessionId');
 
         if (!aspxAuth) {
-            console.error('[Auth] Ошибка: кука .ASPXAUTH не найдена.');
+            console.error('[Auth] Ошибка: Сервер не вернул токен .ASPXAUTH');
             throw new Error('Invalid login or password');
         }
 
-        // Принудительная установка кук для основного домена .kstu.kz
-        const domains = ['.kstu.kz', 'univer.kstu.kz'];
-        for (const domain of domains) {
+        // Принудительно прописываем куки для всех поддоменов, чтобы сессия не терялась
+        const targetDomains = ['.kstu.kz', 'univer.kstu.kz'];
+        for (const domain of targetDomains) {
             const baseUrl = `https://${domain.startsWith('.') ? domain.substring(1) : domain}`;
             await jar.setCookie(`.ASPXAUTH=${aspxAuth.value}; Domain=${domain}; Path=/`, baseUrl);
             if (sessionId) {
@@ -72,17 +89,20 @@ export async function login(username, password) {
             }
         }
 
-        console.log('[Auth] Авторизация успешна.');
+        console.log('[Auth] Авторизация успешна. Токены получены.');
         return {
             aspxAuth: aspxAuth.value,
             sessionId: sessionId ? sessionId.value : null,
-            jar
+            jar // Возвращаем настроенный jar для дальнейших запросов
         };
+
     } catch (error) {
-        if (error.response && error.response.status === 401) {
-            throw new Error('Invalid login or password');
+        // Если это наша ошибка — прокидываем дальше
+        if (error.message === 'Invalid login or password') {
+            throw error;
         }
-        console.error('[Auth] Ошибка при входе:', error.message, error.stack);
-        throw error;
+        // Если ошибка сети или сервера
+        console.error('[Auth] Критическая ошибка при запросе:', error.message);
+        throw new Error('Auth service unavailable');
     }
 }

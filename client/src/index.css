@@ -21,6 +21,9 @@
   --lesson-bg: #e9f2ff;
   --active-header: #000000;
   --active-secondary: #374151;
+  --error-bg: #fef2f2;
+  --error-text: #dc2626;
+  --error-border: #fee2e2;
 }
 
 /* Переменные для Темной Темы (OLED - чистый черный) */
@@ -39,6 +42,9 @@
   --lesson-bg: #111111;
   --active-header: #000000;
   --active-secondary: #000000bb;
+  --error-bg: #1a0707;
+  --error-text: #f87171;
+  --error-border: #450a0a;
 }
 
 body {

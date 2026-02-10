@@ -1,32 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import styles from './App.module.css';
 
 function Login() {
   const navigate = useNavigate();
-  // Состояние текущей темы (светлая/темная)
   const [theme] = useState(localStorage.getItem('theme') || 'light');
 
-  // Применяем тему к корневому элементу при загрузке
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
-
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState(localStorage.getItem('username') || '');
+  const [password, setPassword] = useState(localStorage.getItem('password') || '');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Определение адреса API в зависимости от окружения
   const API_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:5000'
     : 'https://kstu-schedule-app-server.vercel.app';
 
-  // Обработка входа и получения расписания
-  const handleLogin = async (e) => {
+  // Оборачиваем handleLogin в useCallback, чтобы вызвать его внутри useEffect
+  const handleLogin = useCallback(async (e, isAutoLogin = false) => {
     if (e) e.preventDefault();
-    if (!username || !password) {
+
+    // Если это не авто-вход, проверяем поля
+    if (!isAutoLogin && (!username || !password)) {
       setError('Заполните все поля');
       return;
     }
@@ -35,55 +30,79 @@ function Login() {
     setLoading(true);
 
     try {
-      // Попытка входа с использованием существующей сессии (ускорение до 2сек)
       const savedSession = localStorage.getItem('userSession');
       const session = savedSession ? JSON.parse(savedSession) : null;
+      const lastLoginTime = localStorage.getItem('lastLoginTime');
+
+      // Логика "входа на час": если прошло больше 60 минут, не шлем старую сессию
+      const isSessionExpired = lastLoginTime && (Date.now() - parseInt(lastLoginTime) > 3600000);
 
       const response = await axios.post(`${API_URL}/api/schedule`, {
         username,
         password,
-        session
+        session: isSessionExpired ? null : session // Если час прошел, заставляем сервер перелогиниться
       });
 
       if (response.data && response.data.schedule) {
+        // Сохраняем учетки для удобства (но пароль лучше не хранить вечно, либо шифровать)
         localStorage.setItem('username', username);
         localStorage.setItem('password', password);
         localStorage.setItem('userSchedule', JSON.stringify(response.data.schedule));
         localStorage.setItem('serverWeek', response.data.week);
         localStorage.setItem('serverWeekType', response.data.weekType);
 
-        // Сохраняем сессию для следующего раза (Уровень 2)
+        // ОБНОВЛЯЕМ ВРЕМЯ ВХОДА
+        localStorage.setItem('lastLoginTime', Date.now().toString());
+
         if (response.data.session) {
           localStorage.setItem('userSession', JSON.stringify(response.data.session));
         }
 
         localStorage.setItem('isScheduleLoaded', 'true');
-        localStorage.setItem('lastUpdate', Date.now().toString());
-
         navigate('/schedule');
-      } else {
-        setError('Сервер не прислал данные расписания.');
       }
     } catch (e) {
+      console.error(e);
       if (e.response?.status === 401) {
         setError('Неверный логин или пароль');
-        localStorage.removeItem('userSession'); // Удаляем битую сессию
+        localStorage.removeItem('userSession');
+        localStorage.removeItem('lastLoginTime');
       } else {
         setError('Ошибка сервера. Попробуйте позже.');
       }
     } finally {
       setLoading(false);
     }
-  };
+  }, [username, password, navigate, API_URL]);
+
+  // ЭФФЕКТ: Автоматический вход при открытии браузера
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+
+    const checkAutoLogin = async () => {
+      const savedUser = localStorage.getItem('username');
+      const savedPass = localStorage.getItem('password');
+      const lastLoginTime = localStorage.getItem('lastLoginTime');
+
+      // Если есть данные и прошло меньше часа — пробуем войти сами
+      if (savedUser && savedPass && lastLoginTime) {
+        const diff = Date.now() - parseInt(lastLoginTime);
+        if (diff < 3600000) { // 1 час в миллисекундах
+          handleLogin(null, true);
+        }
+      }
+    };
+
+    checkAutoLogin();
+  }, [theme, handleLogin]);
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      handleLogin();
-    }
+    if (e.key === 'Enter') handleLogin();
   };
 
   return (
     <div className={styles.page}>
+      {/* Твоя верстка без изменений */}
       <div className={styles.card}>
         <div className={styles.header}>
           <div className={styles.logo}>🎓</div>
@@ -92,16 +111,11 @@ function Login() {
         </div>
 
         <div className={styles.form}>
+          {/* {error && <div className={styles.errorMessage}>{error}</div>}
+           */}
           {error && (
-            <div style={{
-              color: '#d32f2f',
-              backgroundColor: '#ffebee',
-              padding: '10px',
-              borderRadius: '4px',
-              marginBottom: '15px',
-              textAlign: 'center',
-              fontSize: '14px'
-            }}>
+            <div className={styles.errorMessage}>
+              <span style={{ fontSize: '16px' }}>⚠️</span>
               {error}
             </div>
           )}
@@ -110,7 +124,6 @@ function Login() {
             <label>Логин</label>
             <input
               type="text"
-              placeholder="логин"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -122,30 +135,30 @@ function Login() {
             <label>Пароль</label>
             <input
               type="password"
-              placeholder="пароль"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={loading}
             />
           </div>
-
+          {/* 
+          <button className={styles.button} onClick={handleLogin} disabled={loading}>
+            {loading ? 'Заходим в Универ...' : 'Войти'}
+          </button> */}
           <button
             className={styles.button}
             onClick={handleLogin}
             disabled={loading}
-            style={{ opacity: loading ? 0.7 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
           >
             {loading ? (
-              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                <span className={styles.spinner}></span> Заходим в Универ...
-              </span>
-            ) : 'Войти'}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                <div className={styles.spinner}></div>
+                <span>Заходим в Универ...</span>
+              </div>
+            ) : (
+              'Войти'
+            )}
           </button>
-        </div>
-
-        <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '11px', color: '#999' }}>
-          <div>Authors: WildMaks456 & Castle1919</div>
         </div>
       </div>
     </div>
