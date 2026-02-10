@@ -25,7 +25,6 @@ function Login() {
 
   // Обработка входа и получения расписания
   const handleLogin = async (e) => {
-
     if (e) e.preventDefault();
 
     if (!username || !password) {
@@ -36,13 +35,10 @@ function Login() {
     setError('');
     setLoading(true);
 
-
-
-
     try {
-      console.log('Попытка входа для:', username);
+      // console.log('Попытка входа для:', username);
 
-      // очищаем ВСЁ хранилище. 
+      // Очищаем локальное хранилище перед новым входом
       localStorage.clear();
 
       const response = await axios.post(`${API_URL}/api/schedule`, {
@@ -50,16 +46,18 @@ function Login() {
         password
       });
 
-      if (response.data && Array.isArray(response.data)) {
-        // Проверяем, что сервер реально прислал новые данные
-        console.log('Данные получены, сохраняю свежее расписание...');
+      if (response.data && response.data.schedule) {
+        // console.log('Данные получены:', response.data);
 
-        // Сохраняем логин и новое расписание
+        // Сохраняем данные авторизации и расписания
         localStorage.setItem('username', username);
         localStorage.setItem('password', password);
-        localStorage.setItem('userSchedule', JSON.stringify(response.data));
+        localStorage.setItem('userSchedule', JSON.stringify(response.data.schedule));
+        localStorage.setItem('serverWeek', response.data.week);
+        localStorage.setItem('serverWeekType', response.data.weekType);
+        localStorage.setItem('isScheduleLoaded', 'true');
 
-        // Маленькая хитрость: добавляем метку времени, чтобы страница расписания поняла, что данные обновились
+        // Устанавливаем метку времени обновления
         localStorage.setItem('lastUpdate', Date.now().toString());
 
         navigate('/schedule');
@@ -68,19 +66,19 @@ function Login() {
       }
 
     } catch (e) {
-      console.error('Ошибка при входе:', e);
+      // console.error('Ошибка при входе:', e);
 
       if (e.response?.status === 401) {
         setError('Неверный логин или пароль');
       } else {
-        setError('Ошибка сервера или парсера. Проверьте консоль бэкенда.');
+        setError('Ошибка сервера. Попробуйте позже.');
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // Функция для входа по нажатию Enter
+  // Обработка нажатия Enter для входа
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       handleLogin();

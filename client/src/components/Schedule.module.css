@@ -50,6 +50,12 @@
   box-shadow: var(--shadow);
   color: var(--text-color);
   transition: transform 0.2s, background 0.3s;
+
+  /* Фиксированная высота для единообразия */
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 /* Стили для активной (текущей) пары */
@@ -67,6 +73,7 @@
 .activeLesson .teacher,
 .activeLesson .room {
   color: var(--active-secondary) !important;
+  font-style: normal;
 }
 
 .activeLesson .time {
@@ -77,21 +84,31 @@
   font-size: 11px;
   font-weight: 600;
   color: var(--accent-color);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .subject {
   font-weight: 600;
+  line-height: 1.2;
+  margin-bottom: 4px;
 }
 
 .teacher {
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--secondary-text);
+  font-weight: 400 !important;
+  /* Принудительно отключаем жирность */
+  display: block;
 }
 
 .room {
   font-size: 11px;
   color: var(--secondary-text);
+  font-weight: 400 !important;
+  /* Принудительно отключаем жирность */
+  margin-top: 4px;
+  /* Увеличиваем отступ для переноса/разделения */
+  display: block;
 }
 
 /* ===== EMPTY ===== */
