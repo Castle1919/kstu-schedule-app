@@ -62,13 +62,14 @@ export async function fetchSchedule(jar) {
 
     const { year, semester, start, end } = getSemesterInfo();
 
-    // Параллельные запросы здесь не нужны, так как установка языка — это сайд-эффект на сервере Универа.
     // Однако, мы используем один и тот же клиент для сохранения сессии.
+    console.log('[Schedule] Установка языка RU...');
     await client.get('https://univer.kstu.kz/lang/change/ru/');
 
     const scheduleUrl = `https://univer.kstu.kz/student/myschedule/${year}/${semester}/${start}/${end}/`;
 
     // Запрос страницы
+    console.log(`[Schedule] Запрос страницы: ${scheduleUrl}`);
     const response = await client.get(scheduleUrl, {
         headers: {
             ...DEFAULT_HEADERS,
@@ -76,6 +77,7 @@ export async function fetchSchedule(jar) {
         }
     });
 
+    console.log(`[Schedule] HTTP Статус: ${response.status}, Длина HTML: ${response.data.length}`);
     return response.data;
 }
 

@@ -3,12 +3,13 @@ import { wrapper } from 'axios-cookiejar-support';
 import { CookieJar } from 'tough-cookie';
 import https from 'https';
 
-// Уровень 1: HTTP Keep-Alive для ускорения повторных запросов
-export const sharedAgent = new https.Agent({
-    keepAlive: true,
-    maxSockets: 100,
-    keepAliveMsecs: 1000
-});
+// Уровень 1: HTTP Keep-Alive (Временно отключен для диагностики 500 ошибки на Vercel)
+// export const sharedAgent = new https.Agent({
+//     keepAlive: true,
+//     maxSockets: 100,
+//     keepAliveMsecs: 1000
+// });
+export const sharedAgent = undefined;
 
 /**
  * Создает CookieJar из существующих кук
@@ -48,7 +49,7 @@ export async function login(username, password) {
     });
 
     try {
-        // console.log(`[Auth] Попытка входа для ${username}...`);
+        console.log(`[Auth] Попытка входа для ${username}...`);
         const response = await client.get(loginUrl, { params });
 
         // Проверка наличия кук после авторизации
@@ -57,7 +58,7 @@ export async function login(username, password) {
         const sessionId = cookies.find(c => c.key === 'ASP.NET_SessionId');
 
         if (!aspxAuth) {
-            // console.error('[Auth] Ошибка: кука .ASPXAUTH не найдена.');
+            console.error('[Auth] Ошибка: кука .ASPXAUTH не найдена.');
             throw new Error('Invalid login or password');
         }
 
@@ -71,7 +72,7 @@ export async function login(username, password) {
             }
         }
 
-        // console.log('[Auth] Авторизация успешна.');
+        console.log('[Auth] Авторизация успешна.');
         return {
             aspxAuth: aspxAuth.value,
             sessionId: sessionId ? sessionId.value : null,
@@ -81,7 +82,7 @@ export async function login(username, password) {
         if (error.response && error.response.status === 401) {
             throw new Error('Invalid login or password');
         }
-        // console.error('[Auth] Ошибка при входе:', error.message);
+        console.error('[Auth] Ошибка при входе:', error.message, error.stack);
         throw error;
     }
 }

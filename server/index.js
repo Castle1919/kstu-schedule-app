@@ -25,6 +25,7 @@ app.use(express.json());
  * @param {object} existingCookies Куки из браузера (aspxAuth, sessionId)
  */
 async function getScheduleData(username, password, existingCookies = null) {
+    console.log(`[API] Запрос расписания для: ${username}`);
     const cacheKey = `schedule_${username}`;
 
     // Пытаемся взять из кэша
@@ -90,8 +91,12 @@ app.post('/api/schedule', async (req, res) => {
         if (error.message === 'Invalid login or password') {
             res.status(401).json({ error: 'Неверный логин или пароль' });
         } else {
-            // console.error('[API Error]', error);
-            res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+            console.error('[API Error]', error);
+            res.status(500).json({
+                error: 'Внутренняя ошибка сервера',
+                message: error.message,
+                stack: error.stack
+            });
         }
     }
 });
@@ -105,7 +110,7 @@ const isMain = process.argv[1] && (
 if (process.env.NODE_ENV !== 'production' && isMain) {
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
-        // console.log(`Бэкенд запущен на порту ${PORT}`)
+        console.log(`Бэкенд запущен на порту ${PORT}`)
     });
 }
 
